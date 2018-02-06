@@ -1,0 +1,6 @@
+[package]
+name = "honggfuzz"
+version = "0.1.0"
+authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
+
+[dependencies]
