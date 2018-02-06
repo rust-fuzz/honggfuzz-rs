@@ -12,4 +12,12 @@ description = """
 Fuzz your Rust code with Honggfuzz !
 """
 
+exclude = [
+	"/honggfuzz/examples/**",
+	"/honggfuzz/hfuzz_cc/**",
+	"/honggfuzz/screenshot-honggfuzz-1.png",
+	"/honggfuzz/third_party/**",
+	"/honggfuzz/includes/**",
+]
+
 [dependencies]
