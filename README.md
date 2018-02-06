@@ -1,6 +1,7 @@
 # honggfuzz-rs
 Fuzz your Rust code with Honggfuzz !
 
+[![asciicast](https://asciinema.org/a/rJ8P4e3enW6gOTseJ8w84OLYd.png)](https://asciinema.org/a/rJ8P4e3enW6gOTseJ8w84OLYd)
 
 ## How To
 Install honggfuzz command to build with instrumentation and fuzz
