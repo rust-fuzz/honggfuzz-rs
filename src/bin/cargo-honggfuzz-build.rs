@@ -34,6 +34,7 @@ fn main() {
 	-Copt-level=3 \
 	-Cdebuginfo=0 \
 	-Cdebug-assertions \
+	-Coverflow_checks \
 	-Cpasses=sancov \
 	-Cllvm-args=-sanitizer-coverage-level=4 \
 	-Cllvm-args=-sanitizer-coverage-trace-pc-guard \
