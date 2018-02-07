@@ -23,7 +23,7 @@ fn main() {
 	let honggfuzz_target_dir = "fuzzing_target";
 	if args.peek() == Some(&"build".to_string()) {
 		args.next();
-		let rustflags = env::var("RUSTFLAGS").unwrap_or("".to_string());
+		let rustflags = env::var("RUSTFLAGS").unwrap_or_default();
 		let rustflags = format!("{} \
 		--cfg fuzzing \
 		-Cpanic=abort \
@@ -48,10 +48,17 @@ fn main() {
 	        .unwrap();
 	    process::exit(status.code().unwrap_or(1));
 	} else {
+		let asan_options = env::var("ASAN_OPTIONS").unwrap_or_default();
+		let asan_options = format!("{}:detect_odr_violation=0", asan_options);
+
+		let tsan_options = env::var("TSAN_OPTIONS").unwrap_or_default();
+		let tsan_options = format!("{}:report_signal_unsafe=0", tsan_options);
+
 		let command = format!("{}/honggfuzz", honggfuzz_target_dir);
 		Command::new(&command)
 	        .args(args)
-	        .env("ASAN_OPTIONS", "detect_odr_violation=0")
+	        .env("ASAN_OPTIONS", asan_options)
+	        .env("TSAN_OPTIONS", tsan_options)
 	        .exec();
 	    println!("cannot execute {}, try to execute \"cargo honggfuzz build\" first", &command);
 	}
