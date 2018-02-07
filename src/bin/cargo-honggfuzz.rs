@@ -17,6 +17,7 @@ fn main() {
 
 	let honggfuzz_target_dir = "fuzzing_target";
 
+	// add some flags to sanitizers to make them work with Rust code
 	let asan_options = env::var("ASAN_OPTIONS").unwrap_or_default();
 	let asan_options = format!("detect_odr_violation=0:{}", asan_options);
 

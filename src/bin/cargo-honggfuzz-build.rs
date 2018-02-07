@@ -25,6 +25,8 @@ fn main() {
 	}
 
 	let honggfuzz_target_dir = "fuzzing_target";
+
+	// compilation flags to instrumentize generated code
 	let rustflags = env::var("RUSTFLAGS").unwrap_or_default();
 	let rustflags = format!("\
 	--cfg fuzzing \
@@ -44,9 +46,9 @@ fn main() {
         .args(&["build", "--target", target_triple()]) // HACK to avoid building build scripts with rustflags
         .args(args)
         .env("RUSTFLAGS", rustflags)
-        .env("CARGO_TARGET_DIR", honggfuzz_target_dir)
-        .env("CARGO_HONGGFUZZ_TARGET_DIR", honggfuzz_target_dir)
-        .status()
+        .env("CARGO_TARGET_DIR", honggfuzz_target_dir) // change target_dir to not clash with regular builds
+        .env("CARGO_HONGGFUZZ_TARGET_DIR", honggfuzz_target_dir) // env variable to be read by build.rs script 
+        .status()                                                // to place honggfuzz executable at a known location
         .unwrap();
     process::exit(status.code().unwrap_or(1));
 }

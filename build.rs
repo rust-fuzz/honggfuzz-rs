@@ -10,10 +10,11 @@ compile_error!("honggfuzz currently only support Linux and OS X operating system
 fn main() {
     // Only build honggfuzz binaries if we are in the process of building an instrumentized binary
     let honggfuzz_target_dir =  match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
-        Ok(path) => path,
+        Ok(path) => path, // path where to place honggfuzz binary. provided by cargo-honggfuzz-build.
         Err(_) => return
     };
 
+    // retrieve env variable provided by cargo
     let out_dir = env::var("OUT_DIR").unwrap();
     let pwd = env::var("PWD").unwrap();
 
@@ -38,6 +39,7 @@ fn main() {
         .expect(&format!("failed to run \"cp honggfuzz/honggfuzz {}\"", &honggfuzz_target_dir));
     assert!(status.success());
 
+    // tell cargo how to link final executable to hfuzz static library
     println!("cargo:rustc-link-lib=static={}", "hfuzz");
     println!("cargo:rustc-link-search=native={}", &out_dir);
 }
