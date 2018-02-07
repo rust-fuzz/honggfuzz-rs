@@ -23,12 +23,12 @@ Fuzz your Rust code with Honggfuzz !
 ## How to use this crate
 Install honggfuzz command to build with instrumentation and fuzz
 ```sh
-cargo install honggfuzz
+cargo install honggfuzz # will install honggfuzz and honggfuzz-build subcommands in cargo
 ```
 Add to your dependencies
 ```toml
 [dependencies]
-honggfuzz = "0.1"
+honggfuzz = "0.2"
 ```
 Add code snippet to fuzz
 ```rust
@@ -52,11 +52,11 @@ fuzz_target!(|data: &[u8]| {
 ```
 Build with instrumentation
 ```sh
-cargo honggfuzz build
+cargo honggfuzz-build # a wrapper on "cargo build" with fuzzing instrumentation enabled. produces binaries in "fuzzing_target" directory
 ```
 
 Fuzz
 ```sh
 mkdir in
-cargo honggfuzz -f in -P -- fuzzing_target/x86_64-unknown-linux-gnu/debug/fuzzme
+cargo honggfuzz -f in -P -- fuzzing_target/x86_64-unknown-linux-gnu/debug/fuzzme # a wrapper on honggfuzz executable with settings adapted to work with Rust code
 ```
