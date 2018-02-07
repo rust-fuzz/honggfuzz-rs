@@ -2,6 +2,12 @@ use std::env;
 use std::process::{self, Command};
 use std::os::unix::process::CommandExt;
 
+#[cfg(not(target_arch="x86_64"))]
+compile_error!("honggfuzz currently only support x86_64 architecture");
+
+#[cfg(not(any(target_os="linux", target_os="macos")))]
+compile_error!("honggfuzz currently only support Linux and OS X operating systems");
+
 fn main() {
 	let mut args = env::args().skip(1);
 	if args.next() != Some("honggfuzz".to_string()) {

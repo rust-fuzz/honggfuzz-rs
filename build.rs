@@ -1,8 +1,13 @@
 use std::env;
 use std::process::Command; 
 
-fn main() {
+#[cfg(not(target_arch="x86_64"))]
+compile_error!("honggfuzz currently only support x86_64 architecture");
 
+#[cfg(not(any(target_os="linux", target_os="macos")))]
+compile_error!("honggfuzz currently only support Linux and OS X operating systems");
+
+fn main() {
     // Only build honggfuzz binaries if we are in the process of building an instrumentized binary
     let honggfuzz_target_dir =  match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
         Ok(path) => path,

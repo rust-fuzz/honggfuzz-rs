@@ -1,17 +1,19 @@
 use std::env;
 use std::process::{self, Command};
 
-fn target_triple() -> &'static str {
-	if !cfg!(target_arch="x86_64") {
-		unimplemented!()
-	}
+#[cfg(not(target_arch="x86_64"))]
+compile_error!("honggfuzz currently only support x86_64 architecture");
 
+#[cfg(not(any(target_os="linux", target_os="macos")))]
+compile_error!("honggfuzz currently only support Linux and OS X operating systems");
+
+fn target_triple() -> &'static str {
 	if cfg!(target_os="linux") {
 		"x86_64-unknown-linux-gnu"
 	} else if cfg!(target_os="macos") {
 	    "x86_64-apple-darwin"
 	} else {
-		unimplemented!()
+		unreachable!()
 	}
 }
 
