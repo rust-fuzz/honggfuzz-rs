@@ -66,6 +66,14 @@ cargo honggfuzz -f in -P -- fuzzing_target/x86_64-unknown-linux-gnu/debug/fuzzme
 ```
 
 ## Relevant documentation about honggfuzz usage
-  * https://github.com/google/honggfuzz/blob/master/docs/USAGE.md
-  * https://github.com/google/honggfuzz/blob/master/docs/FeedbackDrivenFuzzing.md
-  * https://github.com/google/honggfuzz/blob/master/docs/PersistentFuzzing.md
+  * [USAGE](https://github.com/google/honggfuzz/blob/master/docs/USAGE.md)
+  * [FeedbackDrivenFuzzing](https://github.com/google/honggfuzz/blob/master/docs/FeedbackDrivenFuzzing.md)
+  * [PersistentFuzzing](https://github.com/google/honggfuzz/blob/master/docs/PersistentFuzzing.md)
+
+## About Rust fuzzing
+
+There is other project providing Rust fuzzing support at https://github.com/rust-fuzz. 
+
+You'll find support for [AFL](https://github.com/rust-fuzz/afl.rs) and LLVM's [LibFuzzer](https://github.com/rust-fuzz/cargo-fuzz) and there is also a [trophy case](https://github.com/rust-fuzz/trophy-case) ;-) .
+
+This crate was inspired by those projects!
