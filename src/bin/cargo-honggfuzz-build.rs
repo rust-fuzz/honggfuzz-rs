@@ -1,0 +1,50 @@
+use std::env;
+use std::process::{self, Command};
+
+fn target_triple() -> &'static str {
+	if !cfg!(target_arch="x86_64") {
+		unimplemented!()
+	}
+
+	if cfg!(target_os="linux") {
+		"x86_64-unknown-linux-gnu"
+	} else if cfg!(target_os="macos") {
+	    "x86_64-apple-darwin"
+	} else {
+		unimplemented!()
+	}
+}
+
+fn main() {
+	let mut args = env::args().skip(1);
+	if args.next() != Some("honggfuzz-build".to_string()) {
+		eprintln!("please launch as a cargo subcommand: \"cargo honggfuzz-build ...\"");
+		process::exit(1);
+	}
+
+	let honggfuzz_target_dir = "fuzzing_target";
+	let rustflags = env::var("RUSTFLAGS").unwrap_or_default();
+	let rustflags = format!("\
+	--cfg fuzzing \
+	-Cpanic=abort \
+	-Copt-level=3 \
+	-Cdebuginfo=0 \
+	-Cdebug-assertions \
+	-Cpasses=sancov \
+	-Cllvm-args=-sanitizer-coverage-level=4 \
+	-Cllvm-args=-sanitizer-coverage-trace-pc-guard \
+	-Cllvm-args=-sanitizer-coverage-trace-compares \
+	-Cllvm-args=-sanitizer-coverage-prune-blocks=0 \
+	{}", rustflags);
+
+	let cargo_bin = env::var("CARGO").unwrap();
+	let status = Command::new(cargo_bin)
+        .args(&["build", "--target", target_triple()]) // HACK to avoid building build scripts with rustflags
+        .args(args)
+        .env("RUSTFLAGS", rustflags)
+        .env("CARGO_TARGET_DIR", honggfuzz_target_dir)
+        .env("CARGO_HONGGFUZZ_TARGET_DIR", honggfuzz_target_dir)
+        .status()
+        .unwrap();
+    process::exit(status.code().unwrap_or(1));
+}
