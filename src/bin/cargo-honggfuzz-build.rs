@@ -1,6 +1,8 @@
 use std::env;
 use std::process::{self, Command};
 
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 #[cfg(not(target_arch="x86_64"))]
 compile_error!("honggfuzz currently only support x86_64 architecture");
 
@@ -48,6 +50,7 @@ fn main() {
         .args(args)
         .env("RUSTFLAGS", rustflags)
         .env("CARGO_TARGET_DIR", honggfuzz_target_dir) // change target_dir to not clash with regular builds
+        .env("CARGO_HONGGFUZZ_BUILD_VERSION", VERSION)   // used by build.rs to check that versions are in sync
         .env("CARGO_HONGGFUZZ_TARGET_DIR", honggfuzz_target_dir) // env variable to be read by build.rs script 
         .status()                                                // to place honggfuzz executable at a known location
         .unwrap();

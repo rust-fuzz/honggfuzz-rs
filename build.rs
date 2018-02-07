@@ -1,5 +1,7 @@
 use std::env;
-use std::process::Command; 
+use std::process::Command;
+
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 #[cfg(not(target_arch="x86_64"))]
 compile_error!("honggfuzz currently only support x86_64 architecture");
@@ -13,6 +15,12 @@ fn main() {
         Ok(path) => path, // path where to place honggfuzz binary. provided by cargo-honggfuzz-build.
         Err(_) => return
     };
+
+    // check that "cargo honggfuzz-build" command is at the same version as this file
+    let honggfuzz_build_version = env::var("CARGO_HONGGFUZZ_BUILD_VERSION").unwrap_or("unknown".to_string());
+    assert!(VERSION == honggfuzz_build_version,
+            "hongfuzz dependency ({}) and build command ({}) versions do not match",
+            VERSION, honggfuzz_build_version);
 
     // retrieve env variable provided by cargo
     let out_dir = env::var("OUT_DIR").unwrap();
