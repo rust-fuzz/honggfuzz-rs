@@ -4,8 +4,11 @@ Fuzz your Rust code with Honggfuzz !
 [![asciicast](https://asciinema.org/a/rJ8P4e3enW6gOTseJ8w84OLYd.png)](https://asciinema.org/a/rJ8P4e3enW6gOTseJ8w84OLYd)
 
 ## About Honggfuzz
- - project homepage http://honggfuzz.com/
- - project repository https://github.com/google/honggfuzz
+Honggfuzz is a security oriented fuzzer with powerful analysis options. Supports evolutionary, feedback-driven fuzzing based on code coverage (software- and hardware-based)
+  * project homepage http://honggfuzz.com/
+  * project repository https://github.com/google/honggfuzz
+  * this upstream project is maintained by Google, but ...
+  * this is NOT an official Google product
  
 ### Description (from upstream project)
   * It's __multi-process__ and __multi-threaded__: no need to run multiple copies of your fuzzer, as honggfuzz can unlock potential of all your available CPU cores with one process. The file corpus is automatically shared and improved between the fuzzing threads.
@@ -18,7 +21,6 @@ Fuzz your Rust code with Honggfuzz !
   * Supports the __persistent fuzzing mode__ (long-lived process calling a fuzzed API repeatedly) with libhfuzz/libhfuzz.a. More on that can be found [here](https://github.com/google/honggfuzz/blob/master/docs/PersistentFuzzing.md)
   * [Can fuzz remote/standalone long-lasting processes](https://github.com/google/honggfuzz/blob/master/docs/AttachingToPid.md) (e.g. network servers like __Apache's httpd__ and __ISC's bind__), though the [persistent fuzzing mode](https://github.com/google/honggfuzz/blob/master/docs/PersistentFuzzing.md) is suggested instead: as it's faster and multiple instances of a service can be fuzzed with this
   * It comes with the __[examples](https://github.com/google/honggfuzz/tree/master/examples) directory__, consisting of real world fuzz setups for widely-used software (e.g. Apache and OpenSSL)
-
 
 ## How to use this crate
 Install honggfuzz command to build with instrumentation and fuzz
@@ -52,11 +54,18 @@ fuzz_target!(|data: &[u8]| {
 ```
 Build with instrumentation
 ```sh
-cargo honggfuzz-build # a wrapper on "cargo build" with fuzzing instrumentation enabled. produces binaries in "fuzzing_target" directory
+# a wrapper on "cargo build" with fuzzing instrumentation enabled. produces binaries in "fuzzing_target" directory
+cargo honggfuzz-build
 ```
 
 Fuzz
 ```sh
 mkdir in
-cargo honggfuzz -f in -P -- fuzzing_target/x86_64-unknown-linux-gnu/debug/fuzzme # a wrapper on honggfuzz executable with settings adapted to work with Rust code
+# a wrapper on honggfuzz executable with settings adapted to work with Rust code
+cargo honggfuzz -f in -P -- fuzzing_target/x86_64-unknown-linux-gnu/debug/fuzzme 
 ```
+
+## Relevant documentation about honggfuzz usage
+  * https://github.com/google/honggfuzz/blob/master/docs/USAGE.md
+  * https://github.com/google/honggfuzz/blob/master/docs/FeedbackDrivenFuzzing.md
+  * https://github.com/google/honggfuzz/blob/master/docs/PersistentFuzzing.md
