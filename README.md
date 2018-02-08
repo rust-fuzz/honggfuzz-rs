@@ -11,8 +11,8 @@ Fuzz your Rust code with Honggfuzz !
 
 ## About Honggfuzz
 Honggfuzz is a security oriented fuzzer with powerful analysis options. Supports evolutionary, feedback-driven fuzzing based on code coverage (software- and hardware-based)
-  * project homepage http://honggfuzz.com/
-  * project repository https://github.com/google/honggfuzz
+  * project homepage [honggfuzz.com](http://honggfuzz.com/)
+  * project repository [github.com/google/honggfuzz](https://github.com/google/honggfuzz)
   * this upstream project is maintained by Google, but ...
   * this is NOT an official Google product
  
@@ -29,9 +29,9 @@ Honggfuzz is a security oriented fuzzer with powerful analysis options. Supports
   * It comes with the __[examples](https://github.com/google/honggfuzz/tree/master/examples) directory__, consisting of real world fuzz setups for widely-used software (e.g. Apache and OpenSSL)
 
 ## How to use this crate
-Install honggfuzz command to build with instrumentation and fuzz
+Install honggfuzz commands to build with instrumentation and fuzz
 ```sh
-cargo install honggfuzz # will install hfuzz-build, hfuzz-clean and honggfuzz subcommands in cargo
+cargo install honggfuzz # installs hfuzz-build, hfuzz-clean and honggfuzz subcommands in cargo
 ```
 Add to your dependencies
 ```toml
@@ -60,7 +60,8 @@ fuzz_target!(|data: &[u8]| {
 ```
 Build with instrumentation
 ```sh
-# a wrapper on "cargo build" with fuzzing instrumentation enabled. produces binaries in "fuzzing_target" directory
+# a wrapper on "cargo build" with fuzzing instrumentation enabled.
+# produces binaries in "fuzzing_target" directory
 cargo hfuzz-build
 ```
 
@@ -84,7 +85,7 @@ cargo hfuzz-clean
 
 ## About Rust fuzzing
 
-There is other project providing Rust fuzzing support at https://github.com/rust-fuzz. 
+There is other project providing Rust fuzzing support at [github.com/rust-fuzz](https://github.com/rust-fuzz). 
 
 You'll find support for [AFL](https://github.com/rust-fuzz/afl.rs) and LLVM's [LibFuzzer](https://github.com/rust-fuzz/cargo-fuzz) and there is also a [trophy case](https://github.com/rust-fuzz/trophy-case) ;-) .
 
