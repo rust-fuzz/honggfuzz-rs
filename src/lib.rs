@@ -27,7 +27,7 @@
 //! Add to your dependencies
 //! ```toml
 //! [dependencies]
-//! honggfuzz = "0.2"
+//! honggfuzz = "0.3"
 //! ```
 //! Add code snippet to fuzz
 //! ```rust
