@@ -21,8 +21,8 @@ fn target_triple() -> &'static str {
 
 fn main() {
 	let mut args = env::args().skip(1);
-	if args.next() != Some("honggfuzz-build".to_string()) {
-		eprintln!("please launch as a cargo subcommand: \"cargo honggfuzz-build ...\"");
+	if args.next() != Some("hfuzz-build".to_string()) {
+		eprintln!("please launch as a cargo subcommand: \"cargo hfuzz-build ...\"");
 		process::exit(1);
 	}
 
