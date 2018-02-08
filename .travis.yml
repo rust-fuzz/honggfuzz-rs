@@ -20,3 +20,7 @@ addons:
     - binutils-dev
     - libunwind8-dev
 sudo: required
+notifications:
+  slack:
+    on_success: change
+    on_failure: change
