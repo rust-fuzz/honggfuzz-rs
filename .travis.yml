@@ -5,12 +5,12 @@ rust:
   - nightly
 os:
   - linux
-  - osx
+#  - osx
 script:
   - ./test.sh
 env:
  global:
-   - RUST_BACKTRACE=1
+   - RUST_BACKTRACE=full
 matrix:
   allow_failures:
     - rust: nightly
