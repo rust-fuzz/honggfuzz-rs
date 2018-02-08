@@ -7,7 +7,7 @@ os:
   - linux
   - osx
 script:
-  - cargo install --verbose
+  - ./test.sh
 env:
  global:
    - RUST_BACKTRACE=1
