@@ -1,4 +1,10 @@
-# honggfuzz-rs
+# honggfuzz-rs [![Build Status][travis-img]][travis] [![Crates.io][crates-img]][crates]
+
+[travis-img]:   https://travis-ci.org/PaulGrandperrin/honggfuzz-rs.svg?branch=master
+[travis]:       https://travis-ci.org/PaulGrandperrin/honggfuzz-rs
+[crates-img]:   https://img.shields.io/crates/v/honggfuzz.svg
+[crates]:       https://crates.io/crates/honggfuzz
+
 Fuzz your Rust code with Honggfuzz !
 
 [![asciicast](https://asciinema.org/a/rJ8P4e3enW6gOTseJ8w84OLYd.png)](https://asciinema.org/a/rJ8P4e3enW6gOTseJ8w84OLYd)
