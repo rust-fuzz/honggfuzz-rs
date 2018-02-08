@@ -14,3 +14,7 @@ env:
 matrix:
   allow_failures:
     - rust: nightly
+addons:
+  apt:
+    packages:
+    - binutils-dev
