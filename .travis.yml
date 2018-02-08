@@ -19,3 +19,4 @@ addons:
     packages:
     - binutils-dev
     - libunwind8-dev
+sudo: required
