@@ -7,6 +7,8 @@
 
 Fuzz your Rust code with Honggfuzz !
 
+[Documentation](https://docs.rs/honggfuzz)
+
 [![asciicast](https://asciinema.org/a/rJ8P4e3enW6gOTseJ8w84OLYd.png)](https://asciinema.org/a/rJ8P4e3enW6gOTseJ8w84OLYd)
 
 ## About Honggfuzz
