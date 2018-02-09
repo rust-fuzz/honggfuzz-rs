@@ -10,12 +10,15 @@ cargo hfuzz-clean
 # build example with instrumentation
 cargo hfuzz-build --verbose
 
+# clean and prepare workspace
+rm -rf workspace
+mkdir -p workspace/input
+
 # fuzz exemple
-mkdir -p in
-cargo honggfuzz -f in -P -v -N 1000000 --exit_upon_crash  -- fuzzing_target/x86_64-unknown-linux-gnu/debug/example
+cargo honggfuzz -W workspace -f workspace/input -P -v -N 1000000 --exit_upon_crash  -- fuzzing_target/x86_64-unknown-linux-gnu/debug/example
 
 # verify that the fuzzing process found the crash
-test "$(cat *.fuzz)" = "qwertyuiop"
+test "$(cat workspace/*.fuzz)" = "qwertyuiop"
 
 # clean
 cargo hfuzz-clean
