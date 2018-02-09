@@ -5,3 +5,4 @@ authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
 
 [dependencies]
 honggfuzz = {path = ".."}
+# arbitrary = "0.1"

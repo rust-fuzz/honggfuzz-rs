@@ -106,3 +106,29 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
     }
     closure(buf);
 }
+
+#[macro_export]
+macro_rules! fuzz {
+    (|$buf:ident| $body:block) => {
+        honggfuzz::fuzz(|$buf| $body);
+    };
+    (|$buf:ident: &[u8]| $body:block) => {
+        honggfuzz::fuzz(|$buf| $body);
+    };
+    (|$buf:ident: $dty: ty| $body:block) => {
+        honggfuzz::fuzz(|$buf| {
+            let $buf: $dty = {
+                use arbitrary::{Arbitrary, RingBuffer};
+                if let Ok(d) = RingBuffer::new($buf, $buf.len()).and_then(|mut b|{
+                        Arbitrary::arbitrary(&mut b).map_err(|_| "")
+                    }) {
+                    d
+                } else {
+                    return
+                }
+            };
+
+            $body
+        });
+    };
+}
