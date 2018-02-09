@@ -1,6 +1,8 @@
 #!/bin/sh -ve
 export RUST_BACKTRACE=full
 
+cargo clean
+
 # install cargo subcommands
 cargo install --force --verbose
 
@@ -25,3 +27,7 @@ cargo hfuzz-clean
 
 # verify that the fuzzing-target has been cleaned
 test ! -e fuzzing_target
+
+# try to generate doc
+cargo doc
+
