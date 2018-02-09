@@ -45,7 +45,7 @@ Add to your dependencies
 
 ```toml
 [dependencies]
-honggfuzz = "0.3"
+honggfuzz = "0.4"
 ```
 
 Create a target to fuzz
