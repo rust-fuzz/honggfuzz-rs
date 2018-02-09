@@ -7,7 +7,7 @@ repository = "https://github.com/PaulGrandperrin/honggfuzz-rs"
 documentation = "https://docs.rs/honggfuzz"
 homepage = "https://github.com/PaulGrandperrin/honggfuzz-rs/blob/master/README.md"
 readme = "README.md"
-keywords = ["fuzzing", "honggfuzz"]
+keywords = ["honggfuzz", "fuzz", "fuzzer", "fuzzing", "testing"]
 description = """
 Fuzz your Rust code with Honggfuzz !
 """
