@@ -38,25 +38,37 @@ Add to your dependencies
 [dependencies]
 honggfuzz = "0.3"
 ```
-Add code snippet to fuzz
+Create a target to fuzz
 ```rust
-#![no_main]
-#[macro_use] extern crate honggfuzz;
+extern crate honggfuzz;
+use honggfuzz::fuzz;
 
-fuzz_target!(|data: &[u8]| {
-    if data.len() != 10 {return}
-    if data[0] != 'q' as u8 {return}
-    if data[1] != 'w' as u8 {return}
-    if data[2] != 'e' as u8 {return}
-    if data[3] != 'r' as u8 {return}
-    if data[4] != 't' as u8 {return}
-    if data[5] != 'y' as u8 {return}
-    if data[6] != 'u' as u8 {return}
-    if data[7] != 'i' as u8 {return}
-    if data[8] != 'o' as u8 {return}
-    if data[9] != 'p' as u8 {return}
-    panic!("BOOM")
-});
+fn main() {
+    // Here you can parse `std::env::args and 
+    // setup / initialize your project
+
+    // You have full control over the loop but
+    // you're supposed to call `fuzz` ad vitam aeternam
+    loop {
+        // the fuzz function takes a closure which takes
+        // a reference to a slice of u8.
+        // This slice contains a "random" quantity of "random" data.
+        fuzz(|data|{
+            if data.len() != 10 {return}
+            if data[0] != 'q' as u8 {return}
+            if data[1] != 'w' as u8 {return}
+            if data[2] != 'e' as u8 {return}
+            if data[3] != 'r' as u8 {return}
+            if data[4] != 't' as u8 {return}
+            if data[5] != 'y' as u8 {return}
+            if data[6] != 'u' as u8 {return}
+            if data[7] != 'i' as u8 {return}
+            if data[8] != 'o' as u8 {return}
+            if data[9] != 'p' as u8 {return}
+            panic!("BOOM")
+        });
+    }
+}
 ```
 Build with instrumentation
 ```sh
@@ -67,9 +79,9 @@ cargo hfuzz-build
 
 Fuzz
 ```sh
-mkdir in
+mkdir -p workspace/input
 # a wrapper on honggfuzz executable with settings adapted to work with Rust code
-cargo honggfuzz -f in -P -- fuzzing_target/x86_64-unknown-linux-gnu/debug/fuzzme 
+cargo honggfuzz -W workspace -f workspace/input -P -- fuzzing_target/x86_64-unknown-linux-gnu/debug/example
 ```
 
 Clean
@@ -85,7 +97,7 @@ cargo hfuzz-clean
 
 ## About Rust fuzzing
 
-There is other project providing Rust fuzzing support at [github.com/rust-fuzz](https://github.com/rust-fuzz). 
+There is other projects providing Rust fuzzing support at [github.com/rust-fuzz](https://github.com/rust-fuzz). 
 
 You'll find support for [AFL](https://github.com/rust-fuzz/afl.rs) and LLVM's [LibFuzzer](https://github.com/rust-fuzz/cargo-fuzz) and there is also a [trophy case](https://github.com/rust-fuzz/trophy-case) ;-) .
 
