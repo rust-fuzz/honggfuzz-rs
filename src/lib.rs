@@ -100,7 +100,7 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
     let buf;
     unsafe {
         let mut buf_ptr: *const u8 = std::mem::uninitialized();
-        let mut len_ptr: usize = 0;
+        let mut len_ptr: usize = std::mem::uninitialized();
         HF_ITER(&mut buf_ptr, &mut len_ptr);
         buf = ::std::slice::from_raw_parts(buf_ptr, len_ptr);
     }
