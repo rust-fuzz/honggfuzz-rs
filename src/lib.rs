@@ -29,8 +29,7 @@
 //! ```
 //! Create a target to fuzz
 //! ```rust
-//! extern crate honggfuzz;
-//! use honggfuzz::fuzz;
+//! #[macro_use] extern crate honggfuzz;
 //! 
 //! fn main() {
 //!     // Here you can parse `std::env::args and 
@@ -39,10 +38,12 @@
 //!     // You have full control over the loop but
 //!     // you're supposed to call `fuzz` ad vitam aeternam
 //!     loop {
-//!         // the fuzz function takes a closure which takes
-//!         // a reference to a slice of u8.
-//!         // This slice contains a "random" quantity of "random" data.
-//!         fuzz(|data|{
+//!         // The fuzz macro gives an arbitrary object (see `arbitrary crate`)
+//!         // to a closure-like block of code.
+//!         // For performance, it is recommended that you use the native type
+//!         // `&[u8]` when possible.
+//!         // Here, this slice will contain a "random" quantity of "random" data.
+//!         fuzz!(|data: &[u8]| {
 //!             if data.len() != 10 {return}
 //!             if data[0] != 'q' as u8 {return}
 //!             if data[1] != 'w' as u8 {return}
@@ -58,6 +59,7 @@
 //!         });
 //!     }
 //! }
+//! 
 //! ```
 //! Build with instrumentation
 //! ```sh
