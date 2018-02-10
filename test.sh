@@ -8,6 +8,7 @@ cargo clean
 cargo install --force --verbose
 
 cd example
+
 cargo hfuzz clean
 
 # build example with instrumentation
@@ -29,6 +30,23 @@ cargo hfuzz clean
 # verify that the fuzzing-target has been cleaned
 test ! -e fuzzing_target
 
+# build example in debug mode
+cargo hfuzz build-debug --verbose
+
+# clean
+cargo hfuzz clean
+
+# verify that the fuzzing-target has been cleaned
+test ! -e fuzzing_target
+
+# verify that no target directory has been created
+test ! -e target
+
+# go back to root crate
+cd ..
+
 # try to generate doc
 cargo doc
 
+# try to generate doc
+cargo clean
