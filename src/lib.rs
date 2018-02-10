@@ -208,6 +208,8 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
 ///     });
 /// }
 /// ```
+
+#[cfg(fuzzing)]
 #[macro_export]
 macro_rules! fuzz {
     (|$buf:ident| $body:block) => {

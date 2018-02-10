@@ -1,6 +1,5 @@
 use std::fs;
 use std::env;
-use std::iter;
 use std::process::{self, Command};
 use std::os::unix::process::CommandExt;
 
