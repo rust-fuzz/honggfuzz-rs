@@ -161,8 +161,8 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
     use std::fs::File;
     use memmap::MmapOptions;
     
-    let filename = env::var("CARGO_HONGGFUZZ_DEBUG_FILENAME").unwrap_or_else(|_|{
-        eprintln!("error: Environment variable CARGO_HONGGFUZZ_DEBUG_FILENAME not set. Try launching with \"cargo run-debug INPUT.fuzz [ -- ARGS ... ]\"");
+    let filename = env::var("CARGO_HONGGFUZZ_CRASH_FILENAME").unwrap_or_else(|_|{
+        eprintln!("error: Environment variable CARGO_HONGGFUZZ_CRASH_FILENAME not set. Try launching with \"cargo hfuzz run-debug TARGET CRASH_FILENAME [ ARGS ... ]\"");
         std::process::exit(1)
     });
 

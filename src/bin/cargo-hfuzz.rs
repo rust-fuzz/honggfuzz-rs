@@ -1,5 +1,8 @@
+use std::fs;
 use std::env;
+use std::iter;
 use std::process::{self, Command};
+use std::os::unix::process::CommandExt;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const HONGGFUZZ_TARGET_DIR: &'static str = "fuzzing_target";
@@ -17,6 +20,57 @@ fn target_triple() -> &'static str {
         "x86_64-apple-darwin"
     } else {
         unreachable!()
+    }
+}
+
+fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=String> {
+    hfuzz_build(iter::empty(), debug);
+
+    let target = args.next().unwrap_or_else(||{
+        eprintln!("please specify the name of the target like this \"cargo hfuzz run[-debug] TARGET [ ARGS ... ]\"");
+        process::exit(1);
+    });
+
+    if debug {
+        let crash_filename = args.next().unwrap_or_else(||{
+            eprintln!("please specify the crash filename like this \"cargo hfuzz run-debug TARGET CRASH_FILENAME [ ARGS ... ]\"");
+            process::exit(1);
+        });
+
+        let status = Command::new("gdb")
+            .args(&["--args", &format!("fuzzing_target/x86_64-unknown-linux-gnu/debug/{}", target)])
+            .args(args)
+            .env("CARGO_HONGGFUZZ_CRASH_FILENAME", crash_filename)
+            .env("RUST_BACKTRACE", env::var("RUSTFLAGS").unwrap_or("1".to_string()))
+            .status()
+            .unwrap();
+        if !status.success() {
+             process::exit(status.code().unwrap_or(1));
+        }
+    } else {
+        // add some flags to sanitizers to make them work with Rust code
+        let asan_options = env::var("ASAN_OPTIONS").unwrap_or_default();
+        let asan_options = format!("detect_odr_violation=0:{}", asan_options);
+
+        let tsan_options = env::var("TSAN_OPTIONS").unwrap_or_default();
+        let tsan_options = format!("report_signal_unsafe=0:{}", tsan_options);
+
+        fs::create_dir_all("fuzzing_workspace/input").unwrap_or_else(|_| {
+            println!("error: failed to create \"fuzzing_workspace/input\"");
+        });
+
+        let command = format!("{}/honggfuzz", HONGGFUZZ_TARGET_DIR);
+        Command::new(&command) // exec honggfuzz replacing current process
+            .args(&["-W", "fuzzing_workspace", "-f", "fuzzing_workspace/input", "-P"])
+            .args(&["--", &format!("fuzzing_target/x86_64-unknown-linux-gnu/release/{}", target)])
+            .args(args)
+            .env("ASAN_OPTIONS", asan_options)
+            .env("TSAN_OPTIONS", tsan_options)
+            .exec();
+
+        // code flow will only reach here if honggfuzz failed to execute
+        eprintln!("cannot execute {}, try to execute \"cargo hfuzz-build\" from fuzzed project directory", &command);
+        process::exit(1);
     }
 }
 
@@ -56,7 +110,6 @@ fn hfuzz_build<T>(args: T, debug: bool) where T: std::iter::Iterator<Item=String
         .args(args)
         .env("RUSTFLAGS", rustflags)
         .env("CARGO_TARGET_DIR", HONGGFUZZ_TARGET_DIR); // change target_dir to not clash with regular builds
-
     
     if !debug {
         command.arg("--release")
@@ -65,7 +118,9 @@ fn hfuzz_build<T>(args: T, debug: bool) where T: std::iter::Iterator<Item=String
     }                                                                 // to place honggfuzz executable at a known location
 
     let status = command.status().unwrap();
-    process::exit(status.code().unwrap_or(1));
+    if !status.success() {
+         process::exit(status.code().unwrap_or(1));
+    }
 }
 
 fn hfuzz_clean<T>(args: T) where T: std::iter::Iterator<Item=String> {
@@ -76,7 +131,9 @@ fn hfuzz_clean<T>(args: T) where T: std::iter::Iterator<Item=String> {
         .env("CARGO_TARGET_DIR", HONGGFUZZ_TARGET_DIR) // change target_dir to not clash with regular builds
         .status()
         .unwrap();
-    process::exit(status.code().unwrap_or(1));
+    if !status.success() {
+         process::exit(status.code().unwrap_or(1));
+    }
 }
 
 fn main() {
@@ -94,10 +151,10 @@ fn main() {
             hfuzz_build(args, true);
         }
         Some(ref s) if s == "run" => {
-            unimplemented!()
+            hfuzz_run(args, false);
         }
         Some(ref s) if s == "run-debug" => {
-            unimplemented!()
+            hfuzz_run(args, true);
         }
         Some(ref s) if s == "clean" => {
             hfuzz_clean(args);
