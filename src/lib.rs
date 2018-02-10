@@ -92,6 +92,12 @@
 //! cargo hfuzz clean 
 //! ```
 //! 
+//! Optionally, fuzz with LLVM's [sanitizers](https://github.com/japaric/rust-san)
+//!
+//! ```sh
+//! RUSTFLAGS="-Z sanitizer=address" cargo hfuzz run example
+//! ```
+//! 
 //! ## Relevant documentation about honggfuzz usage
 //! * [USAGE](https://github.com/google/honggfuzz/blob/master/docs/USAGE.md)
 //! * [FeedbackDrivenFuzzing](https://github.com/google/honggfuzz/blob/master/docs/FeedbackDrivenFuzzing.md)
