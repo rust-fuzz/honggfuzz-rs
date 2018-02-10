@@ -24,12 +24,13 @@ fn target_triple() -> &'static str {
 }
 
 fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=String> {
-    hfuzz_build(iter::empty(), debug);
 
     let target = args.next().unwrap_or_else(||{
         eprintln!("please specify the name of the target like this \"cargo hfuzz run[-debug] TARGET [ ARGS ... ]\"");
         process::exit(1);
     });
+
+    hfuzz_build(vec!["--bin".to_string(), target.clone()].into_iter(), debug);
 
     if debug {
         let crash_filename = args.next().unwrap_or_else(||{
