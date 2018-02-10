@@ -2,6 +2,8 @@ use std::env;
 use std::process::{self, Command};
 use std::os::unix::process::CommandExt;
 
+const HONGGFUZZ_TARGET_DIR: &'static str = "fuzzing_target";
+
 #[cfg(not(target_arch="x86_64"))]
 compile_error!("honggfuzz currently only support x86_64 architecture");
 
@@ -15,8 +17,6 @@ fn main() {
 		process::exit(1);
 	}
 
-	let honggfuzz_target_dir = "fuzzing_target";
-
 	// add some flags to sanitizers to make them work with Rust code
 	let asan_options = env::var("ASAN_OPTIONS").unwrap_or_default();
 	let asan_options = format!("detect_odr_violation=0:{}", asan_options);
@@ -24,7 +24,7 @@ fn main() {
 	let tsan_options = env::var("TSAN_OPTIONS").unwrap_or_default();
 	let tsan_options = format!("report_signal_unsafe=0:{}", tsan_options);
 
-	let command = format!("{}/honggfuzz", honggfuzz_target_dir);
+	let command = format!("{}/honggfuzz", HONGGFUZZ_TARGET_DIR);
 	Command::new(&command) // exec honggfuzz replacing current process
         .args(args)
         .env("ASAN_OPTIONS", asan_options)
