@@ -107,6 +107,10 @@
 //! 
 //! This crate was inspired by those projects!
 
+#[cfg(fuzzing_debug)]
+extern crate memmap;
+
+#[cfg(not(fuzzing_debug))]
 extern "C" {
     fn HF_ITER(buf_ptr: *mut *const u8, len_ptr: *mut usize );
 }
@@ -139,6 +143,7 @@ extern "C" {
 /// }
 /// ```
 
+#[cfg(not(fuzzing_debug))]
 pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
     let buf;
     unsafe {
@@ -148,6 +153,30 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
         buf = ::std::slice::from_raw_parts(buf_ptr, len_ptr);
     }
     closure(buf);
+}
+
+#[cfg(fuzzing_debug)]
+pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
+    use std::env;
+    use std::fs::File;
+    use memmap::MmapOptions;
+    
+    let filename = env::var("CARGO_HONGGFUZZ_DEBUG_FILENAME").unwrap_or_else(|_|{
+        eprintln!("error: Environment variable CARGO_HONGGFUZZ_DEBUG_FILENAME not set. Try launching with \"cargo run-debug INPUT.fuzz [ -- ARGS ... ]\"");
+        std::process::exit(1)
+    });
+
+    let file = File::open(&filename).unwrap_or_else(|_|{
+        eprintln!("error: failed to open \"{}\"", &filename);
+        std::process::exit(1)
+    });
+
+    let mmap = unsafe {MmapOptions::new().map(&file)}.unwrap_or_else(|_|{
+        eprintln!("error: failed to mmap file \"{}\"", &filename);
+        std::process::exit(1)
+    });
+
+    closure(&mmap);
 }
 
 /// Fuzz a closure-like block of code by passing it an object of arbitrary type.
