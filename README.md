@@ -1,13 +1,15 @@
-# honggfuzz-rs [![Build Status][travis-img]][travis] [![Crates.io][crates-img]][crates]
+# honggfuzz-rs [![Build Status][travis-img]][travis] [![Crates.io][crates-img]][crates] [![Documentation][docs-img]][docs]
 
 [travis-img]:   https://travis-ci.org/PaulGrandperrin/honggfuzz-rs.svg?branch=master
 [travis]:       https://travis-ci.org/PaulGrandperrin/honggfuzz-rs
 [crates-img]:   https://img.shields.io/crates/v/honggfuzz.svg
 [crates]:       https://crates.io/crates/honggfuzz
+[docs-img]:     https://docs.rs/honggfuzz/badge.svg
+[docs]:         https://docs.rs/honggfuzz
 
 Fuzz your Rust code with Honggfuzz !
 
-[Documentation](https://docs.rs/honggfuzz)
+## [Documentation](https://docs.rs/honggfuzz)
 
 [![asciicast](https://asciinema.org/a/rJ8P4e3enW6gOTseJ8w84OLYd.png)](https://asciinema.org/a/rJ8P4e3enW6gOTseJ8w84OLYd)
 
