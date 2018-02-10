@@ -25,5 +25,5 @@ exclude = [
 travis-ci = { repository = "PaulGrandperrin/honggfuzz-rs", branch = "master" }
 maintenance = { status = "actively-developed" }
 
-[dependencies]
+[target.'cfg(fuzzing_debug)'.dependencies]
 memmap = "0.6"
