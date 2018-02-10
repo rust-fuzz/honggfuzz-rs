@@ -7,11 +7,11 @@
 [docs-img]:     https://docs.rs/honggfuzz/badge.svg
 [docs]:         https://docs.rs/honggfuzz
 
-Fuzz your Rust code with Honggfuzz !
+Fuzz your Rust code with Honggfuzz ! 
 
 ## [Documentation](https://docs.rs/honggfuzz)
 
-[![asciicast](https://asciinema.org/a/rJ8P4e3enW6gOTseJ8w84OLYd.png)](https://asciinema.org/a/rJ8P4e3enW6gOTseJ8w84OLYd)
+[![asciicast](https://asciinema.org/a/162128.png)](https://asciinema.org/a/162128)
 
 ## About Honggfuzz
 
