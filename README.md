@@ -39,7 +39,7 @@ Honggfuzz is a security oriented fuzzer with powerful analysis options. Supports
 Install honggfuzz commands to build with instrumentation and fuzz
 
 ```sh
-# installs hfuzz-build, hfuzz-clean and honggfuzz subcommands in cargo
+# installs hfuzz and honggfuzz subcommands in cargo
 cargo install honggfuzz
 ```
 
@@ -86,27 +86,25 @@ fn main() {
 
 ```
 
-Build with instrumentation
+Fuzz for fun and profit !
 
 ```sh
-# a wrapper on "cargo build" with fuzzing instrumentation enabled.
-# produces binaries in "fuzzing_target" directory
-cargo hfuzz-build
+# builds with fuzzing instrumentation and then runs the "example" target
+cargo hfuzz run example
 ```
- 
-Fuzz
+
+Once you got a crash, replay it easily in a debug environment
 
 ```sh
-mkdir -p workspace/input
-# a wrapper on honggfuzz executable with settings adapted to work with Rust code
-cargo honggfuzz -W workspace -f workspace/input -P -- fuzzing_target/x86_64-unknown-linux-gnu/debug/example
+# builds the target in debug mode and replays automatically the crash in gdb
+cargo hfuzz run-debug example fuzzing_workspace/*.fuzz
 ```
- 
+
 Clean
 
 ```sh
 # a wrapper on "cargo clean" which cleans the fuzzing_target directory
-cargo hfuzz-clean 
+cargo hfuzz clean 
 ```
 
 ## Relevant documentation about honggfuzz usage

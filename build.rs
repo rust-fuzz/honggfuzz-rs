@@ -12,11 +12,11 @@ compile_error!("honggfuzz currently only support Linux and OS X operating system
 fn main() {
     // Only build honggfuzz binaries if we are in the process of building an instrumentized binary
     let honggfuzz_target_dir =  match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
-        Ok(path) => path, // path where to place honggfuzz binary. provided by cargo-hfuzz-build.
+        Ok(path) => path, // path where to place honggfuzz binary. provided by cargo-hfuzz command.
         Err(_) => return
     };
 
-    // check that "cargo hfuzz-build" command is at the same version as this file
+    // check that "cargo hfuzz" command is at the same version as this file
     let honggfuzz_build_version = env::var("CARGO_HONGGFUZZ_BUILD_VERSION").unwrap_or("unknown".to_string());
     assert!(VERSION == honggfuzz_build_version,
             "hongfuzz dependency ({}) and build command ({}) versions do not match",

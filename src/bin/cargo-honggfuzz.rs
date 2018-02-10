@@ -32,6 +32,6 @@ fn main() {
         .exec();
 
     // code flow will only reach here if honggfuzz failed to execute
-    eprintln!("cannot execute {}, try to execute \"cargo hfuzz-build\" from fuzzed project directory", &command);
+    eprintln!("cannot execute {}, try to execute \"cargo hfuzz build\" from fuzzed project directory", &command);
     process::exit(1);
 }

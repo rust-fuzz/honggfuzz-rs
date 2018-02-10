@@ -1,6 +1,7 @@
 #!/bin/sh -ve
 export RUST_BACKTRACE=full
 
+cargo clean
 cargo hfuzz clean
 
 # build example with instrumentation

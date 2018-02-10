@@ -23,21 +23,21 @@
 //! 
 //! Install honggfuzz commands to build with instrumentation and fuzz
 //! 
-//! ```
-//! ## installs hfuzz-build, hfuzz-clean and honggfuzz subcommands in cargo
+//! ```sh
+//! # installs hfuzz and honggfuzz subcommands in cargo
 //! cargo install honggfuzz
 //! ```
 //! 
 //! Add to your dependencies
 //! 
-//! ```
+//! ```toml
 //! [dependencies]
 //! honggfuzz = "0.4"
 //! ```
 //! 
 //! Create a target to fuzz
 //! 
-//! ```
+//! ```rust
 //! #[macro_use] extern crate honggfuzz;
 //! 
 //! fn main() {
@@ -71,27 +71,25 @@
 //! 
 //! ```
 //! 
-//! Build with instrumentation
+//! Fuzz for fun and profit !
 //! 
+//! ```sh
+//! # builds with fuzzing instrumentation and then runs the "example" target
+//! cargo hfuzz run example
 //! ```
-//! ## a wrapper on "cargo build" with fuzzing instrumentation enabled.
-//! ## produces binaries in "fuzzing_target" directory
-//! cargo hfuzz-build
-//! ```
-//!  
-//! Fuzz
 //! 
+//! Once you got a crash, replay it easily in a debug environment
+//! 
+//! ```sh
+//! # builds the target in debug mode and replays automatically the crash in gdb
+//! cargo hfuzz run-debug example fuzzing_workspace/*.fuzz
 //! ```
-//! mkdir -p workspace/input
-//! ## a wrapper on honggfuzz executable with settings adapted to work with Rust code
-//! cargo honggfuzz -W workspace -f workspace/input -P -- fuzzing_target/x86_64-unknown-linux-gnu/debug/example
-//! ```
-//!  
+//! 
 //! Clean
 //! 
-//! ```
-//! ## a wrapper on "cargo clean" which cleans the fuzzing_target directory
-//! cargo hfuzz-clean 
+//! ```sh
+//! # a wrapper on "cargo clean" which cleans the fuzzing_target directory
+//! cargo hfuzz clean 
 //! ```
 //! 
 //! ## Relevant documentation about honggfuzz usage
@@ -106,6 +104,7 @@
 //! You'll find support for [AFL](https://github.com/rust-fuzz/afl.rs) and LLVM's [LibFuzzer](https://github.com/rust-fuzz/cargo-fuzz) and there is also a [trophy case](https://github.com/rust-fuzz/trophy-case) ;-) .
 //! 
 //! This crate was inspired by those projects!
+
 
 #[cfg(fuzzing_debug)]
 extern crate memmap;
