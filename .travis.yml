@@ -29,4 +29,4 @@ notifications:
   slack:
     on_success: change
     on_failure: change
-osx_image: xcode9.3beta
+#osx_image: xcode9.3beta
