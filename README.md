@@ -46,7 +46,7 @@ cargo install honggfuzz
 Add to your dependencies
 
 ```toml
-[target.'cfg(fuzzing)'.dependencies]
+[dependencies]
 honggfuzz = "0.5"
 ```
 
