@@ -111,11 +111,10 @@
 //! 
 //! This crate was inspired by those projects!
 
-
-#[cfg(fuzzing_debug)]
+#[cfg(all(fuzzing, fuzzing_debug))]
 extern crate memmap;
 
-#[cfg(not(fuzzing_debug))]
+#[cfg(all(fuzzing, not(fuzzing_debug)))]
 extern "C" {
     fn HF_ITER(buf_ptr: *mut *const u8, len_ptr: *mut usize );
 }
@@ -147,8 +146,16 @@ extern "C" {
 ///     });
 /// }
 /// ```
+#[cfg(not(fuzzing))]
+#[allow(unused_variables)]
+pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
+    eprintln!("This executable hasn't been built with honggfuzz instrumentation.");
+    eprintln!("Try executing \"cargo hfuzz build\" and check out \"fuzzing_target\" directory.");
+    eprintln!("Or execute \"cargo hfuzz run TARGET\"");
+    std::process::exit(1);
+}
 
-#[cfg(not(fuzzing_debug))]
+#[cfg(all(fuzzing, not(fuzzing_debug)))]
 pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
     let buf;
     unsafe {
@@ -160,7 +167,7 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
     closure(buf);
 }
 
-#[cfg(fuzzing_debug)]
+#[cfg(all(fuzzing, fuzzing_debug))]
 pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
     use std::env;
     use std::fs::File;
@@ -213,8 +220,21 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
 ///     });
 /// }
 /// ```
+#[cfg(not(fuzzing))]
+#[macro_export]
+macro_rules! fuzz {
+    (|$buf:ident| $body:block) => {
+        honggfuzz::fuzz(|_| {});
+    };
+    (|$buf:ident: &[u8]| $body:block) => {
+        honggfuzz::fuzz(|_| {});
+    };
+    (|$buf:ident: $dty: ty| $body:block) => {
+        honggfuzz::fuzz(|_| {});
+    };
+}
 
-#[cfg(fuzzing)]
+#[cfg(all(fuzzing))]
 #[macro_export]
 macro_rules! fuzz {
     (|$buf:ident| $body:block) => {
@@ -240,3 +260,4 @@ macro_rules! fuzz {
         });
     };
 }
+
