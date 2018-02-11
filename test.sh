@@ -17,7 +17,7 @@ version=`rustc --version`
 if [ -z "${version##*nightly*}" ] ;then
 	RUSTFLAGS="-Z sanitizer=address" ./test.sh
 	RUSTFLAGS="-Z sanitizer=leak" ./test.sh
-	# RUSTFLAGS="-Z sanitizer=memory" ./test.sh # not working because of some use of uninitialized value
+	# RUSTFLAGS="-Z sanitizer=memory" ./test.sh # not working, see: https://github.com/rust-lang/rust/issues/39610
 	RUSTFLAGS="-Z sanitizer=thread" ./test.sh
 fi
 
