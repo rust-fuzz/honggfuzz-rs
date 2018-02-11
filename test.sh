@@ -7,13 +7,19 @@ cargo clean
 # install cargo subcommands
 cargo install --force --verbose
 
-# run test.sh in example directory with and wihtout sanitizers
 cd example
+
+# run test.sh without sanitizers
 RUSTFLAGS="" ./test.sh
-RUSTFLAGS="-Z sanitizer=address" ./test.sh
-RUSTFLAGS="-Z sanitizer=leak" ./test.sh
-# RUSTFLAGS="-Z sanitizer=memory" ./test.sh # not working because of some use of uninitialized value
-RUSTFLAGS="-Z sanitizer=thread" ./test.sh
+
+# run test.sh with sanitizers only on nightly
+version=`rustc --version`
+if [ -z "${version##*nightly*}" ] ;then
+	RUSTFLAGS="-Z sanitizer=address" ./test.sh
+	RUSTFLAGS="-Z sanitizer=leak" ./test.sh
+	# RUSTFLAGS="-Z sanitizer=memory" ./test.sh # not working because of some use of uninitialized value
+	RUSTFLAGS="-Z sanitizer=thread" ./test.sh
+fi
 
 # go back to root crate
 cd ..
