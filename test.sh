@@ -7,9 +7,13 @@ cargo clean
 # install cargo subcommands
 cargo install --force --verbose
 
-# run test.sh in example directory
+# run test.sh in example directory with and wihtout sanitizers
 cd example
-./test.sh
+RUSTFLAGS="" ./test.sh
+RUSTFLAGS="-Z sanitizer=address" ./test.sh
+RUSTFLAGS="-Z sanitizer=leak" ./test.sh
+# RUSTFLAGS="-Z sanitizer=memory" ./test.sh # not working because of some use of uninitialized value
+RUSTFLAGS="-Z sanitizer=thread" ./test.sh
 
 # go back to root crate
 cd ..
