@@ -41,7 +41,7 @@ fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=Stri
             .args(&["-ex", "b rust_panic", "-ex", "r", "-ex", "bt", "--args", &format!("fuzzing_target/x86_64-unknown-linux-gnu/debug/{}", target)])
             .args(args)
             .env("CARGO_HONGGFUZZ_CRASH_FILENAME", crash_filename)
-            .env("RUST_BACKTRACE", env::var("RUSTFLAGS").unwrap_or("1".to_string()))
+            .env("RUST_BACKTRACE", env::var("RUST_BACKTRACE").unwrap_or("1".to_string()))
             .status()
             .unwrap();
         if !status.success() {
