@@ -31,7 +31,7 @@
 //! Add to your dependencies
 //! 
 //! ```toml
-//! [dependencies]
+//! [target.'cfg(fuzzing)'.dependencies]
 //! honggfuzz = "0.5"
 //! ```
 //! 
