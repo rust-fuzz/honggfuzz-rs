@@ -5,20 +5,25 @@ rust:
   - nightly
 os:
   - linux
-#  - osx
+  - osx
+matrix:
+  allow_failures:
+    - rust: nightly
+  exclude:
+    - os: osx
+      rust: stable
+    - os: osx
+      rust: beta
 script:
   - ./test.sh
 env:
  global:
-   - RUST_BACKTRACE=full
-matrix:
-  allow_failures:
-    - rust: nightly
+    - RUST_BACKTRACE=full
 addons:
   apt:
     packages:
-    - binutils-dev
-    - libunwind8-dev
+      - binutils-dev
+      - libunwind8-dev
 sudo: required
 notifications:
   slack:
