@@ -37,3 +37,16 @@ test ! -e fuzzing_target
 
 # verify that no target directory has been created
 test ! -e target
+
+# verify that we can build the target without instrumentation
+cargo build
+
+# but when we run it, it should fail with a useful error message and status 17
+set +e
+cargo run
+status=$?
+set -e
+test $status -eq 17
+
+cargo clean
+

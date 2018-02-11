@@ -152,7 +152,7 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
     eprintln!("This executable hasn't been built with honggfuzz instrumentation.");
     eprintln!("Try executing \"cargo hfuzz build\" and check out \"fuzzing_target\" directory.");
     eprintln!("Or execute \"cargo hfuzz run TARGET\"");
-    std::process::exit(1);
+    std::process::exit(17);
 }
 
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
