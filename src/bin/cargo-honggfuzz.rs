@@ -2,7 +2,7 @@ use std::env;
 use std::process::{self, Command};
 use std::os::unix::process::CommandExt;
 
-const HONGGFUZZ_TARGET_DIR: &'static str = "fuzzing_target";
+const HONGGFUZZ_TARGET: &'static str = "fuzz_target";
 
 #[cfg(not(target_arch="x86_64"))]
 compile_error!("honggfuzz currently only support x86_64 architecture");
@@ -24,7 +24,7 @@ fn main() {
 	let tsan_options = env::var("TSAN_OPTIONS").unwrap_or_default();
 	let tsan_options = format!("report_signal_unsafe=0:{}", tsan_options);
 
-	let command = format!("{}/honggfuzz", HONGGFUZZ_TARGET_DIR);
+	let command = format!("{}/honggfuzz", HONGGFUZZ_TARGET);
 	Command::new(&command) // exec honggfuzz replacing current process
         .args(args)
         .env("ASAN_OPTIONS", asan_options)

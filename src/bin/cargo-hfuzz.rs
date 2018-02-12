@@ -4,7 +4,8 @@ use std::process::{self, Command};
 use std::os::unix::process::CommandExt;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
-const HONGGFUZZ_TARGET_DIR: &'static str = "fuzzing_target";
+const HONGGFUZZ_TARGET: &'static str = "fuzz_target";
+const HONGGFUZZ_WORKSPACE: &'static str = "fuzz_workspace";
 
 #[cfg(not(target_arch="x86_64"))]
 compile_error!("honggfuzz currently only support x86_64 architecture");
@@ -38,7 +39,7 @@ fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=Stri
         });
 
         let status = Command::new("gdb")
-            .args(&["-ex", "b rust_panic", "-ex", "r", "-ex", "bt", "--args", &format!("fuzzing_target/x86_64-unknown-linux-gnu/debug/{}", target)])
+            .args(&["-ex", "b rust_panic", "-ex", "r", "-ex", "bt", "--args", &format!("{}/x86_64-unknown-linux-gnu/debug/{}", HONGGFUZZ_TARGET, target)])
             .args(args)
             .env("CARGO_HONGGFUZZ_CRASH_FILENAME", crash_filename)
             .env("RUST_BACKTRACE", env::var("RUST_BACKTRACE").unwrap_or("1".to_string()))
@@ -55,14 +56,14 @@ fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=Stri
         let tsan_options = env::var("TSAN_OPTIONS").unwrap_or_default();
         let tsan_options = format!("report_signal_unsafe=0:{}", tsan_options);
 
-        fs::create_dir_all("fuzzing_workspace/input").unwrap_or_else(|_| {
-            println!("error: failed to create \"fuzzing_workspace/input\"");
+        fs::create_dir_all(&format!("{}/input", HONGGFUZZ_WORKSPACE)).unwrap_or_else(|_| {
+            println!("error: failed to create \"{}/input\"", HONGGFUZZ_WORKSPACE);
         });
 
-        let command = format!("{}/honggfuzz", HONGGFUZZ_TARGET_DIR);
+        let command = format!("{}/honggfuzz", HONGGFUZZ_TARGET);
         Command::new(&command) // exec honggfuzz replacing current process
-            .args(&["-W", "fuzzing_workspace", "-f", "fuzzing_workspace/input", "-P"])
-            .args(&["--", &format!("fuzzing_target/x86_64-unknown-linux-gnu/release/{}", target)])
+            .args(&["-W", HONGGFUZZ_WORKSPACE, "-f", &format!("{}/input", HONGGFUZZ_WORKSPACE), "-P"])
+            .args(&["--", &format!("{}/x86_64-unknown-linux-gnu/release/{}", HONGGFUZZ_TARGET, target)])
             .args(args)
             .env("ASAN_OPTIONS", asan_options)
             .env("TSAN_OPTIONS", tsan_options)
@@ -109,12 +110,12 @@ fn hfuzz_build<T>(args: T, debug: bool) where T: std::iter::Iterator<Item=String
     command.args(&["build", "--target", target_triple()]) // HACK to avoid building build scripts with rustflags
         .args(args)
         .env("RUSTFLAGS", rustflags)
-        .env("CARGO_TARGET_DIR", HONGGFUZZ_TARGET_DIR); // change target_dir to not clash with regular builds
+        .env("CARGO_TARGET_DIR", HONGGFUZZ_TARGET); // change target_dir to not clash with regular builds
     
     if !debug {
         command.arg("--release")
             .env("CARGO_HONGGFUZZ_BUILD_VERSION", VERSION)   // used by build.rs to check that versions are in sync
-            .env("CARGO_HONGGFUZZ_TARGET_DIR", HONGGFUZZ_TARGET_DIR); // env variable to be read by build.rs script 
+            .env("CARGO_HONGGFUZZ_TARGET_DIR", HONGGFUZZ_TARGET); // env variable to be read by build.rs script 
     }                                                                 // to place honggfuzz executable at a known location
 
     let status = command.status().unwrap();
@@ -128,7 +129,7 @@ fn hfuzz_clean<T>(args: T) where T: std::iter::Iterator<Item=String> {
     let status = Command::new(cargo_bin)
         .args(&["clean"])
         .args(args)
-        .env("CARGO_TARGET_DIR", HONGGFUZZ_TARGET_DIR) // change target_dir to not clash with regular builds
+        .env("CARGO_TARGET_DIR", HONGGFUZZ_TARGET) // change target_dir to not clash with regular builds
         .status()
         .unwrap();
     if !status.success() {

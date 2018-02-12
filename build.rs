@@ -11,7 +11,7 @@ compile_error!("honggfuzz currently only support Linux and OS X operating system
 
 fn main() {
     // Only build honggfuzz binaries if we are in the process of building an instrumentized binary
-    let honggfuzz_target_dir =  match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
+    let honggfuzz_target=  match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
         Ok(path) => path, // path where to place honggfuzz binary. provided by cargo-hfuzz command.
         Err(_) => return
     };
@@ -42,9 +42,9 @@ fn main() {
 
     // copy honggfuzz executable to honggfuzz target directory
     let status = Command::new("cp")
-        .args(&["honggfuzz/honggfuzz", &format!("{}/{}", &pwd, &honggfuzz_target_dir)])
+        .args(&["honggfuzz/honggfuzz", &format!("{}/{}", &pwd, &honggfuzz_target)])
         .status()
-        .expect(&format!("failed to run \"cp honggfuzz/honggfuzz {}\"", &honggfuzz_target_dir));
+        .expect(&format!("failed to run \"cp honggfuzz/honggfuzz {}\"", &honggfuzz_target));
     assert!(status.success());
 
     // tell cargo how to link final executable to hfuzz static library
