@@ -56,13 +56,13 @@ fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=Stri
         let tsan_options = env::var("TSAN_OPTIONS").unwrap_or_default();
         let tsan_options = format!("report_signal_unsafe=0:{}", tsan_options);
 
-        fs::create_dir_all(&format!("{}/input", HONGGFUZZ_WORKSPACE)).unwrap_or_else(|_| {
-            println!("error: failed to create \"{}/input\"", HONGGFUZZ_WORKSPACE);
+        fs::create_dir_all(&format!("{}/{}/input", HONGGFUZZ_WORKSPACE, target)).unwrap_or_else(|_| {
+            println!("error: failed to create \"{}/{}/input\"", HONGGFUZZ_WORKSPACE, target);
         });
 
         let command = format!("{}/honggfuzz", HONGGFUZZ_TARGET);
         Command::new(&command) // exec honggfuzz replacing current process
-            .args(&["-W", HONGGFUZZ_WORKSPACE, "-f", &format!("{}/input", HONGGFUZZ_WORKSPACE), "-P"])
+            .args(&["-W", &format!("{}/{}", HONGGFUZZ_WORKSPACE, target), "-f", &format!("{}/{}/input", HONGGFUZZ_WORKSPACE, target), "-P"])
             .args(&["--", &format!("{}/x86_64-unknown-linux-gnu/release/{}", HONGGFUZZ_TARGET, target)])
             .args(args)
             .env("ASAN_OPTIONS", asan_options)
