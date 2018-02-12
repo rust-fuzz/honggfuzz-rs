@@ -4,8 +4,8 @@ use std::process::{self, Command};
 use std::os::unix::process::CommandExt;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
-const HONGGFUZZ_TARGET: &'static str = "fuzz_target";
-const HONGGFUZZ_WORKSPACE: &'static str = "fuzz_workspace";
+const HONGGFUZZ_TARGET: &'static str = "hfuzz_target";
+const HONGGFUZZ_WORKSPACE: &'static str = "hfuzz_workspace";
 
 #[cfg(not(target_arch="x86_64"))]
 compile_error!("honggfuzz currently only support x86_64 architecture");

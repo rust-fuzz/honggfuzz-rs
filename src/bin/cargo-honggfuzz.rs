@@ -2,7 +2,7 @@ use std::env;
 use std::process::{self, Command};
 use std::os::unix::process::CommandExt;
 
-const HONGGFUZZ_TARGET: &'static str = "fuzz_target";
+const HONGGFUZZ_TARGET: &'static str = "hfuzz_target";
 
 #[cfg(not(target_arch="x86_64"))]
 compile_error!("honggfuzz currently only support x86_64 architecture");

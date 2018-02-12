@@ -7,13 +7,13 @@ cargo hfuzz clean
 # build example with instrumentation
 cargo hfuzz build --verbose
 
-# clean and prepare fuzz_workspace
-workspace="fuzz_workspace/example"
+# clean and prepare hfuzz_workspace
+workspace="hfuzz_workspace/example"
 rm -rf $workspace
 mkdir -p $workspace/input
 
 # fuzz exemple
-cargo honggfuzz -W $workspace -f $workspace/input -P -v -N 1000000 --exit_upon_crash  -- fuzz_target/x86_64-unknown-linux-gnu/release/example
+cargo honggfuzz -W $workspace -f $workspace/input -P -v -N 1000000 --exit_upon_crash  -- hfuzz_target/x86_64-unknown-linux-gnu/release/example
 
 # verify that the fuzzing process found the crash
 test "$(cat $workspace/*.fuzz)" = "qwertyuiop"
@@ -21,21 +21,21 @@ test "$(cat $workspace/*.fuzz)" = "qwertyuiop"
 # clean
 cargo hfuzz clean
 
-# verify that the fuzz_target has been cleaned
-test ! -e fuzz_target
+# verify that the hfuzz_target has been cleaned
+test ! -e hfuzz_target
 
 # build example in debug mode
 cargo hfuzz build-debug --verbose
 
 # test that the debug executable exists
-test -x fuzz_target/x86_64-unknown-linux-gnu/debug/example
+test -x hfuzz_target/x86_64-unknown-linux-gnu/debug/example
 
 # clean
 cargo hfuzz clean
-rm -rf fuzz_workspace
+rm -rf hfuzz_workspace
 
-# verify that the fuzz_target has been cleaned
-test ! -e fuzz_target
+# verify that the hfuzz_target has been cleaned
+test ! -e hfuzz_target
 
 # verify that no target directory has been created
 test ! -e target
