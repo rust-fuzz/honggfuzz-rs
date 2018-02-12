@@ -14,16 +14,16 @@ fn main() {
         // Here, this slice will contain a "random" quantity of "random" data.
         fuzz!(|data: &[u8]| {
             if data.len() != 10 {return}
-            if data[0] != 'q' as u8 {return}
-            if data[1] != 'w' as u8 {return}
-            if data[2] != 'e' as u8 {return}
-            if data[3] != 'r' as u8 {return}
-            if data[4] != 't' as u8 {return}
-            if data[5] != 'y' as u8 {return}
-            if data[6] != 'u' as u8 {return}
-            if data[7] != 'i' as u8 {return}
-            if data[8] != 'o' as u8 {return}
-            if data[9] != 'p' as u8 {return}
+            if data[0] != b'q' {return}
+            if data[1] != b'w' {return}
+            if data[2] != b'e' {return}
+            if data[3] != b'r' {return}
+            if data[4] != b't' {return}
+            if data[5] != b'y' {return}
+            if data[6] != b'u' {return}
+            if data[7] != b'i' {return}
+            if data[8] != b'o' {return}
+            if data[9] != b'p' {return}
             panic!("BOOM")
         });
     }
