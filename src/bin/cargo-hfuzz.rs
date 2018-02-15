@@ -57,9 +57,9 @@ fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=Stri
         let tsan_options = format!("report_signal_unsafe=0:{}", tsan_options);
 
         // get user-defined args for honggfuzz
-        let hfuzz_args = env::var("HFUZZ_ARGS").unwrap_or_default();
+        let hfuzz_run_args = env::var("HFUZZ_RUN_ARGS").unwrap_or_default();
         // FIXME: we split by whitespace without respecting escaping or quotes
-        let hfuzz_args = hfuzz_args.split_whitespace();
+        let hfuzz_run_args = hfuzz_run_args.split_whitespace();
 
         fs::create_dir_all(&format!("{}/{}/input", HONGGFUZZ_WORKSPACE, target)).unwrap_or_else(|_| {
             println!("error: failed to create \"{}/{}/input\"", HONGGFUZZ_WORKSPACE, target);
@@ -68,7 +68,7 @@ fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=Stri
         let command = format!("{}/honggfuzz", HONGGFUZZ_TARGET);
         Command::new(&command) // exec honggfuzz replacing current process
             .args(&["-W", &format!("{}/{}", HONGGFUZZ_WORKSPACE, target), "-f", &format!("{}/{}/input", HONGGFUZZ_WORKSPACE, target), "-P"])
-            .args(hfuzz_args) // allows user-specified arguments to be given to honggfuzz
+            .args(hfuzz_run_args) // allows user-specified arguments to be given to honggfuzz
             .args(&["--", &format!("{}/x86_64-unknown-linux-gnu/release/{}", HONGGFUZZ_TARGET, target)])
             .args(args)
             .env("ASAN_OPTIONS", asan_options)
@@ -111,10 +111,16 @@ fn hfuzz_build<T>(args: T, debug: bool) where T: std::iter::Iterator<Item=String
     // add user provided flags
     rustflags.push_str(&env::var("RUSTFLAGS").unwrap_or_default());
 
+    // get user-defined args for building
+    let hfuzz_build_args = env::var("HFUZZ_BUILD_ARGS").unwrap_or_default();
+    // FIXME: we split by whitespace without respecting escaping or quotes
+    let hfuzz_build_args = hfuzz_build_args.split_whitespace();
+
     let cargo_bin = env::var("CARGO").unwrap();
     let mut command = Command::new(cargo_bin);
     command.args(&["build", "--target", target_triple()]) // HACK to avoid building build scripts with rustflags
         .args(args)
+        .args(hfuzz_build_args) // allows user-specified arguments to be given to cargo build
         .env("RUSTFLAGS", rustflags)
         .env("CARGO_TARGET_DIR", HONGGFUZZ_TARGET); // change target_dir to not clash with regular builds
     
