@@ -3,6 +3,7 @@ export RUST_BACKTRACE=full
 
 cargo clean
 cargo hfuzz clean
+cargo update
 
 # build example with instrumentation
 cargo hfuzz build --verbose

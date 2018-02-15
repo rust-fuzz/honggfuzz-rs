@@ -3,6 +3,7 @@ export RUST_BACKTRACE=full
 
 cargo uninstall honggfuzz 2>/dev/null || true
 cargo clean
+cargo update
 
 # install cargo subcommands
 cargo install --force --verbose
