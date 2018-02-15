@@ -107,13 +107,40 @@ Clean
 cargo hfuzz clean 
 ```
 
-Optionally, fuzz with LLVM's [sanitizers](https://github.com/japaric/rust-san)
+### Environment variables
+
+#### `RUSTFLAGS`
+
+You can use `RUSTFLAGS` to send additional arguments to `rustc`.
+
+For instance, you can enable the use of LLVM's [sanitizers](https://github.com/japaric/rust-san).
+This is a recommended option if you want to test your `unsafe` rust code but it will have an impact on performance.
 
 ```sh
 RUSTFLAGS="-Z sanitizer=address" cargo hfuzz run example
 ```
 
-## Relevant documentation about honggfuzz usage
+#### `HFUZZ_BUILD_ARGS`
+
+You can use `HFUZZ_BUILD_ARGS` to send additional arguments to `cargo build`.
+
+#### `HFUZZ_RUN_ARGS`
+
+You can use `HFUZZ_RUN_ARGS` to send additional arguments to `honggfuzz`.
+See [USAGE](https://github.com/google/honggfuzz/blob/master/docs/USAGE.md) for the list of those.
+
+For example:
+
+```sh
+# 1 second of timeout
+# use 12 fuzzing thread
+# be verbose
+# stop after 1000000 fuzzing iteration
+# exit upon crash
+HFUZZ_RUN_ARGS="-t 1 -n 12 -v -N 1000000 --exit_upon_crash" cargo hfuzz run example
+```
+
+## Relevant documentation about honggfuzz
 * [USAGE](https://github.com/google/honggfuzz/blob/master/docs/USAGE.md)
 * [FeedbackDrivenFuzzing](https://github.com/google/honggfuzz/blob/master/docs/FeedbackDrivenFuzzing.md)
 * [PersistentFuzzing](https://github.com/google/honggfuzz/blob/master/docs/PersistentFuzzing.md)
