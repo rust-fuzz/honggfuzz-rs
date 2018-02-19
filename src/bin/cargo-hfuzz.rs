@@ -103,8 +103,14 @@ fn hfuzz_build<T>(args: T, debug: bool) where T: std::iter::Iterator<Item=String
         -C passes=sancov \
         -C llvm-args=-sanitizer-coverage-level=4 \
         -C llvm-args=-sanitizer-coverage-trace-pc-guard \
-        -C llvm-args=-sanitizer-coverage-trace-compares \
         -C llvm-args=-sanitizer-coverage-prune-blocks=0 \
+        ");
+    }
+
+    // trace-compares doesn't work on macOS without sanitizer
+    if cfg!(not(target_os="macos")) {
+        rustflags.push_str("\
+        -C llvm-args=-sanitizer-coverage-trace-compares \
         ");
     }
 
