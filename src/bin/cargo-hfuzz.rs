@@ -39,7 +39,7 @@ fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=Stri
         });
 
         let status = Command::new("gdb")
-            .args(&["-ex", "b rust_panic", "-ex", "r", "-ex", "bt", "--args", &format!("{}/x86_64-unknown-linux-gnu/debug/{}", HONGGFUZZ_TARGET, target)])
+            .args(&["-ex", "b rust_panic", "-ex", "r", "-ex", "bt", "--args", &format!("{}/{}/debug/{}", HONGGFUZZ_TARGET, target_triple(), target)])
             .args(args)
             .env("CARGO_HONGGFUZZ_CRASH_FILENAME", crash_filename)
             .env("RUST_BACKTRACE", env::var("RUST_BACKTRACE").unwrap_or("1".to_string()))
@@ -69,7 +69,7 @@ fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=Stri
         Command::new(&command) // exec honggfuzz replacing current process
             .args(&["-W", &format!("{}/{}", HONGGFUZZ_WORKSPACE, target), "-f", &format!("{}/{}/input", HONGGFUZZ_WORKSPACE, target), "-P"])
             .args(hfuzz_run_args) // allows user-specified arguments to be given to honggfuzz
-            .args(&["--", &format!("{}/x86_64-unknown-linux-gnu/release/{}", HONGGFUZZ_TARGET, target)])
+            .args(&["--", &format!("{}/{}/release/{}", HONGGFUZZ_TARGET, target_triple(), target)])
             .args(args)
             .env("ASAN_OPTIONS", asan_options)
             .env("TSAN_OPTIONS", tsan_options)
