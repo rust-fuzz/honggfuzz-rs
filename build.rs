@@ -26,11 +26,18 @@ fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let pwd = env::var("PWD").unwrap();
 
+    // clean upsteam honggfuzz directory
+    let status = Command::new("make")
+        .args(&["-C", "honggfuzz", "clean"])
+        .status()
+        .expect("failed to run \"make -C honggfuzz clean\"");
+    assert!(status.success());
+
     // build honggfuzz command and hfuzz static library
     let status = Command::new("make")
-        .args(&["-C", "honggfuzz", "clean", "honggfuzz", "libhfuzz/libhfuzz.a"])
+        .args(&["-C", "honggfuzz", "honggfuzz", "libhfuzz/libhfuzz.a"])
         .status()
-        .expect("failed to run \"make -C honggfuzz clean hongfuzz libhfuzz/libhfuzz.a\"");
+        .expect("failed to run \"make -C honggfuzz hongfuzz libhfuzz/libhfuzz.a\"");
     assert!(status.success());
 
     // copy hfuzz static library to output directory
