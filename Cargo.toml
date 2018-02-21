@@ -3,9 +3,9 @@ name = "honggfuzz"
 version = "0.5.5"
 authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
 license = "MIT/Apache-2.0/Unlicense/WTFPL"
-repository = "https://github.com/PaulGrandperrin/honggfuzz-rs"
+repository = "https://github.com/rust-fuzz/honggfuzz-rs"
 documentation = "https://docs.rs/honggfuzz"
-homepage = "https://github.com/PaulGrandperrin/honggfuzz-rs/blob/master/README.md"
+homepage = "https://github.com/rust-fuzz/honggfuzz-rs/blob/master/README.md"
 readme = "README.md"
 keywords = ["honggfuzz", "security", "fuzzer", "fuzzing", "testing"]
 categories = ["development-tools::testing"]
@@ -21,7 +21,7 @@ exclude = [
 ]
 
 [badges]
-travis-ci = { repository = "PaulGrandperrin/honggfuzz-rs", branch = "master" }
+travis-ci = { repository = "rust-fuzz/honggfuzz-rs", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [target.'cfg(fuzzing_debug)'.dependencies]
