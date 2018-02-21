@@ -14,7 +14,7 @@ rm -rf $workspace
 mkdir -p $workspace/input
 
 # fuzz exemple
-HFUZZ_RUN_ARGS="-v -N 1000000 --exit_upon_crash" cargo hfuzz run example
+HFUZZ_RUN_ARGS="-v -N 10000000 --run_time 120 --exit_upon_crash" cargo hfuzz run example
 
 # verify that the fuzzing process found the crash
 test "$(cat $workspace/*.fuzz)" = "qwertyuiop"
