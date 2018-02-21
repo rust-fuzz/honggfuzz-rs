@@ -19,8 +19,8 @@ HFUZZ_RUN_ARGS="-v -N 10000000 --run_time 120 --exit_upon_crash" cargo hfuzz run
 # verify that the fuzzing process found the crash
 test "$(cat $workspace/*.fuzz)" = "qwerty"
 
-# build example in debug mode
-cargo hfuzz build-debug --verbose
+# build example in debug mode (without sanitizers)
+RUSTFLAGS="" cargo hfuzz build-debug --verbose
 
 # try to launch the debug executable without the crash file, it should fail with error code 1
 set +e
