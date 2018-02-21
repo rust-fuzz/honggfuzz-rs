@@ -9,11 +9,11 @@ os:
 matrix:
   allow_failures:
     - os: osx
-  exclude:
-    - os: osx
-      rust: stable
-    - os: osx
-      rust: beta
+#  exclude:
+#    - os: osx
+#      rust: stable
+#    - os: osx
+#      rust: beta
 script:
   - ./test.sh
 env:
