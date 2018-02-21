@@ -17,9 +17,11 @@ RUSTFLAGS="" ./test.sh
 version=`rustc --version`
 if [ -z "${version##*nightly*}" ] ;then
 	RUSTFLAGS="-Z sanitizer=address" ./test.sh
-	RUSTFLAGS="-Z sanitizer=leak" ./test.sh
-	# RUSTFLAGS="-Z sanitizer=memory" ./test.sh # not working, see: https://github.com/rust-lang/rust/issues/39610
 	RUSTFLAGS="-Z sanitizer=thread" ./test.sh
+	if [ "`uname`" = "Linux" ] ;then # the leak sanitizer is only available on Linux
+		RUSTFLAGS="-Z sanitizer=leak" ./test.sh
+	fi
+	# RUSTFLAGS="-Z sanitizer=memory" ./test.sh # not working, see: https://github.com/rust-lang/rust/issues/39610
 fi
 
 # go back to root crate
