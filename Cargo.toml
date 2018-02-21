@@ -16,7 +16,7 @@ Fuzz your Rust code with Honggfuzz !
 exclude = [
 	"/honggfuzz/examples/**",
 	"/honggfuzz/hfuzz_cc/**",
-	"/honggfuzz/screenshot-honggfuzz-1.png",
+	"/honggfuzz/**/*.png",
 	"/honggfuzz/includes/**",
 ]
 
