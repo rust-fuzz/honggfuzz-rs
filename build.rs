@@ -3,11 +3,8 @@ use std::process::Command;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
-#[cfg(not(target_arch="x86_64"))]
-compile_error!("honggfuzz currently only support x86_64 architecture");
-
-#[cfg(not(any(target_os="linux", target_os="macos")))]
-compile_error!("honggfuzz currently only support Linux and OS X operating systems");
+#[cfg(target_family="windows")]
+compile_error!("honggfuzz-rs does not currenlty support Windows but works well under WSL (Windows Subsystem for Linux)");
 
 fn main() {
     // Only build honggfuzz binaries if we are in the process of building an instrumentized binary

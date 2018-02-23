@@ -7,20 +7,14 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const HONGGFUZZ_TARGET: &'static str = "hfuzz_target";
 const HONGGFUZZ_WORKSPACE: &'static str = "hfuzz_workspace";
 
-#[cfg(not(target_arch="x86_64"))]
-compile_error!("honggfuzz currently only support x86_64 architecture");
+#[cfg(target_family="windows")]
+compile_error!("honggfuzz-rs does not currenlty support Windows but works well under WSL (Windows Subsystem for Linux)");
 
-#[cfg(not(any(target_os="linux", target_os="macos")))]
-compile_error!("honggfuzz currently only support Linux and OS X operating systems");
-
-fn target_triple() -> &'static str {
-    if cfg!(target_os="linux") {
-        "x86_64-unknown-linux-gnu"
-    } else if cfg!(target_os="macos") {
-        "x86_64-apple-darwin"
-    } else {
-        unreachable!()
-    }
+fn target_triple() -> String {
+    let output = Command::new("rustc").args(&["-v", "-V"]).output().unwrap();
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let triple = stdout.lines().filter(|l|{l.starts_with("host: ")}).nth(0).unwrap().get(6..).unwrap();
+    triple.into()
 }
 
 fn debugger_command(target: &str) -> Command {
@@ -139,7 +133,7 @@ fn hfuzz_build<T>(args: T, debug: bool) where T: std::iter::Iterator<Item=String
 
     let cargo_bin = env::var("CARGO").unwrap();
     let mut command = Command::new(cargo_bin);
-    command.args(&["build", "--target", target_triple()]) // HACK to avoid building build scripts with rustflags
+    command.args(&["build", "--target", &target_triple()]) // HACK to avoid building build scripts with rustflags
         .args(args)
         .args(hfuzz_build_args) // allows user-specified arguments to be given to cargo build
         .env("RUSTFLAGS", rustflags)
