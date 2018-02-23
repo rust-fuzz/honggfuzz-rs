@@ -149,17 +149,13 @@ extern "C" {
 ///
 /// loop {
 ///     fuzz(|data|{
-///         if data.len() != 10 {return}
+///         if data.len() != 6 {return}
 ///         if data[0] != b'q' {return}
 ///         if data[1] != b'w' {return}
 ///         if data[2] != b'e' {return}
 ///         if data[3] != b'r' {return}
 ///         if data[4] != b't' {return}
 ///         if data[5] != b'y' {return}
-///         if data[6] != b'u' {return}
-///         if data[7] != b'i' {return}
-///         if data[8] != b'o' {return}
-///         if data[9] != b'p' {return}
 ///         panic!("BOOM")
 ///     });
 /// }
@@ -223,17 +219,13 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
 ///
 /// loop {
 ///     fuzz!(|data: &[u8]| {
-///         if data.len() != 10 {return}
+///         if data.len() != 6 {return}
 ///         if data[0] != b'q' {return}
 ///         if data[1] != b'w' {return}
 ///         if data[2] != b'e' {return}
 ///         if data[3] != b'r' {return}
 ///         if data[4] != b't' {return}
 ///         if data[5] != b'y' {return}
-///         if data[6] != b'u' {return}
-///         if data[7] != b'i' {return}
-///         if data[8] != b'o' {return}
-///         if data[9] != b'p' {return}
 ///         panic!("BOOM")
 ///     });
 /// }
