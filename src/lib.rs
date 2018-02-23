@@ -1,23 +1,18 @@
 //! ## About Honggfuzz
 //! 
-//! Honggfuzz is a security oriented fuzzer with powerful analysis options. Supports evolutionary, feedback-driven fuzzing based on code coverage (software- and hardware-based)
+//! Honggfuzz is a security oriented fuzzer with powerful analysis options. Supports evolutionary, feedback-driven fuzzing based on code coverage (software- and hardware-based).
 //! 
 //! * project homepage [honggfuzz.com](http://honggfuzz.com/)
 //! * project repository [github.com/google/honggfuzz](https://github.com/google/honggfuzz)
 //! * this upstream project is maintained by Google, but ...
 //! * this is NOT an official Google product
 //! 
-//! ### Description (from upstream project)
-//! * It's __multi-process__ and __multi-threaded__: no need to run multiple copies of your fuzzer, as honggfuzz can unlock potential of all your available CPU cores with one process. The file corpus is automatically shared and improved between the fuzzing threads.
-//! * It's blazingly fast when in the [persistent fuzzing mode](https://github.com/google/honggfuzz/blob/master/docs/PersistentFuzzing.md)). A simple/empty _LLVMFuzzerTestOneInput_ function can be tested with __up to 1mo iterations per second__ on a relatively modern CPU (e.g. i7-6700K)
-//! * Has a [solid track record](#trophies) of uncovered security bugs: the __only__ (to the date) __vulnerability in OpenSSL with the [critical](https://www.openssl.org/news/secadv/20160926.txt) score mark__ was discovered by honggfuzz. See the [Trophies](#trophies) paragraph for the summary of findings to the date
-//! * Uses low-level interfaces to monitor processes (e.g. _ptrace_ under Linux). As opposed to other fuzzers, it __will discover and report hijacked/ignored signals__ (intercepted and potentially hidden by signal handlers)
-//! * Easy-to-use, feed it a simple corpus directory (can even be empty) and it will work its way up expanding it utilizing feedback-based coverage metrics
-//! * Supports several (more than any other coverage-based feedback-driven fuzzer) hardware-based (CPU: branch/instruction counting, __Intel BTS__, __Intel PT__) and software-based [feedback-driven fuzzing](https://github.com/google/honggfuzz/blob/master/docs/FeedbackDrivenFuzzing.md) methods known from other fuzzers (libfuzzer, afl)
-//! * Works (at least) under GNU/Linux, FreeBSD, Mac OS X, Windows/CygWin and [Android](https://github.com/google/honggfuzz/blob/master/docs/Android.md)
-//! * Supports the __persistent fuzzing mode__ (long-lived process calling a fuzzed API repeatedly) with libhfuzz/libhfuzz.a. More on that can be found [here](https://github.com/google/honggfuzz/blob/master/docs/PersistentFuzzing.md)
-//! * [Can fuzz remote/standalone long-lasting processes](https://github.com/google/honggfuzz/blob/master/docs/AttachingToPid.md) (e.g. network servers like __Apache's httpd__ and __ISC's bind__), though the [persistent fuzzing mode](https://github.com/google/honggfuzz/blob/master/docs/PersistentFuzzing.md) is suggested instead: as it's faster and multiple instances of a service can be fuzzed with this
-//! * It comes with the __[examples](https://github.com/google/honggfuzz/tree/master/examples) directory__, consisting of real world fuzz setups for widely-used software (e.g. Apache and OpenSSL)
+//! ## Compatibility
+//! 
+//! * __Rust__: stable, beta, nightly
+//! * __OS__: GNU/Linux, macOS, FreeBSD, Android, WSL (Windows Subsystem for Linux)
+//! * __Arch__: x86_64, x86, arm64-v8a, armeabi-v7a, armeabi
+//! * __Sanitizer__: none, address, thread, leak 
 //! 
 //! ## How to use this crate
 //! 
@@ -53,17 +48,13 @@
 //!         // `&[u8]` when possible.
 //!         // Here, this slice will contain a "random" quantity of "random" data.
 //!         fuzz!(|data: &[u8]| {
-//!             if data.len() != 10 {return}
+//!             if data.len() != 6 {return}
 //!             if data[0] != b'q' {return}
 //!             if data[1] != b'w' {return}
 //!             if data[2] != b'e' {return}
 //!             if data[3] != b'r' {return}
 //!             if data[4] != b't' {return}
 //!             if data[5] != b'y' {return}
-//!             if data[6] != b'u' {return}
-//!             if data[7] != b'i' {return}
-//!             if data[8] != b'o' {return}
-//!             if data[9] != b'p' {return}
 //!             panic!("BOOM")
 //!         });
 //!     }
