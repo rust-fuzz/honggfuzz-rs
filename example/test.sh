@@ -16,8 +16,11 @@ mkdir -p $workspace/input
 # fuzz exemple
 HFUZZ_RUN_ARGS="-v -N 10000000 --run_time 120 --exit_upon_crash" cargo hfuzz run example
 
+# get crash file path
+crash_path="$(ls $workspace/*.fuzz | head -n1)"
+
 # verify that the fuzzing process found the crash
-test "$(cat $workspace/*.fuzz)" = "qwerty"
+test $(cat "$crash_path") = "qwerty"
 
 # build example in debug mode (and without sanitizers)
 RUSTFLAGS="" cargo hfuzz build-debug --verbose
@@ -31,7 +34,7 @@ test $status -eq 1
 
 # try to launch the debug executable with the crash file, it should fail with error code 101
 set +e
-CARGO_HONGGFUZZ_CRASH_FILENAME=$(echo $workspace/*.fuzz) hfuzz_target/*/debug/example
+CARGO_HONGGFUZZ_CRASH_FILENAME="$crash_path" hfuzz_target/*/debug/example
 status=$?
 set -e
 test $status -eq 101
