@@ -6,6 +6,11 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 #[cfg(target_family="windows")]
 compile_error!("honggfuzz-rs does not currenlty support Windows but works well under WSL (Windows Subsystem for Linux)");
 
+#[cfg(not(any(target_os = "freebsd", target_os = "dragonfly", target_os = "bitrig", target_os = "openbsd", target_os = "netbsd")))]
+const GNU_MAKE: &'static str = "make";
+#[cfg(any(target_os = "freebsd", target_os = "dragonfly", target_os = "bitrig", target_os = "openbsd", target_os = "netbsd"))]
+const GNU_MAKE: &'static str = "gmake";
+
 fn main() {
     // Only build honggfuzz binaries if we are in the process of building an instrumentized binary
     let honggfuzz_target=  match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
@@ -24,14 +29,14 @@ fn main() {
     let pwd = env::var("PWD").unwrap();
 
     // clean upsteam honggfuzz directory
-    let status = Command::new("make")
+    let status = Command::new(GNU_MAKE)
         .args(&["-C", "honggfuzz", "clean"])
         .status()
         .expect("failed to run \"make -C honggfuzz clean\"");
     assert!(status.success());
 
     // build honggfuzz command and hfuzz static library
-    let status = Command::new("make")
+    let status = Command::new(GNU_MAKE)
         .args(&["-C", "honggfuzz", "honggfuzz", "libhfuzz/libhfuzz.a"])
         .status()
         .expect("failed to run \"make -C honggfuzz hongfuzz libhfuzz/libhfuzz.a\"");
