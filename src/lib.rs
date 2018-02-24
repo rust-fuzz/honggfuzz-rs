@@ -116,6 +116,10 @@
 //! HFUZZ_RUN_ARGS="-t 1 -n 12 -v -N 1000000 --exit_upon_crash" cargo hfuzz run example
 //! ```
 //! 
+//! #### `HFUZZ_DEBUGGER`
+//! 
+//! By default we use `rust-lldb` but you can change it to `rust-gdb`, `gdb`, `/usr/bin/lldb-7` ...
+//! 
 //! ## Relevant documentation about honggfuzz
 //! * [USAGE](https://github.com/google/honggfuzz/blob/master/docs/USAGE.md)
 //! * [FeedbackDrivenFuzzing](https://github.com/google/honggfuzz/blob/master/docs/FeedbackDrivenFuzzing.md)
