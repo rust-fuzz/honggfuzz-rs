@@ -21,13 +21,11 @@ fn debugger_command(target: &str) -> Command {
     let mut cmd;
 
     if cfg!(target_os="linux") {
-        cmd = Command::new("gdb");
+        cmd = Command::new("rust-gdb");
         cmd.args(&["-ex", "b rust_panic", "-ex", "r", "-ex", "bt", "--args", &format!("{}/{}/debug/{}", HONGGFUZZ_TARGET, target_triple(), target)]);
-    } else if cfg!(target_os="macos") {
-        cmd = Command::new("lldb");
-        cmd.args(&["-o", "b rust_panic", "-o", "r", "-o", "bt", "-f", &format!("{}/{}/debug/{}", HONGGFUZZ_TARGET, target_triple(), target), "--"]);
     } else {
-        unreachable!()
+        cmd = Command::new("rust-lldb");
+        cmd.args(&["-o", "b rust_panic", "-o", "r", "-o", "bt", "-f", &format!("{}/{}/debug/{}", HONGGFUZZ_TARGET, target_triple(), target), "--"]);
     }
 
     cmd 
