@@ -11,7 +11,7 @@ Fuzz your Rust code with Honggfuzz !
 
 ## [Documentation](https://docs.rs/honggfuzz)
 
-[![asciicast](https://asciinema.org/a/162128.png)](https://asciinema.org/a/162128)
+[![asciicast](https://asciinema.org/a/43MLo5Xl8ukHxgwDLArKqS9xc.png)](https://asciinema.org/a/43MLo5Xl8ukHxgwDLArKqS9xc)
 
 ## About Honggfuzz
 
