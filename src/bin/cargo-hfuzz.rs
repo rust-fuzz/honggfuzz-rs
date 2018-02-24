@@ -2,6 +2,7 @@ use std::fs;
 use std::env;
 use std::process::{self, Command};
 use std::os::unix::process::CommandExt;
+use std::path::Path;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const HONGGFUZZ_TARGET: &'static str = "hfuzz_target";
@@ -18,15 +19,17 @@ fn target_triple() -> String {
 }
 
 fn debugger_command(target: &str) -> Command {
-    let mut cmd;
+    let debugger = env::var("HFUZZ_DEBUGGER").unwrap_or("rust-lldb".into());
+    let mut cmd = Command::new(&debugger);
 
-    if cfg!(target_os="linux") {
-        cmd = Command::new("rust-gdb");
-        cmd.args(&["-ex", "b rust_panic", "-ex", "r", "-ex", "bt", "--args", &format!("{}/{}/debug/{}", HONGGFUZZ_TARGET, target_triple(), target)]);
-    } else {
-        cmd = Command::new("rust-lldb");
-        cmd.args(&["-o", "b rust_panic", "-o", "r", "-o", "bt", "-f", &format!("{}/{}/debug/{}", HONGGFUZZ_TARGET, target_triple(), target), "--"]);
-    }
+    match Path::new(&debugger).file_name().map(|f| f.to_string_lossy().contains("lldb")) {
+        Some(true) => {
+            cmd.args(&["-o", "b rust_panic", "-o", "r", "-o", "bt", "-f", &format!("{}/{}/debug/{}", HONGGFUZZ_TARGET, target_triple(), target), "--"]);
+        }
+        _ => {
+            cmd.args(&["-ex", "b rust_panic", "-ex", "r", "-ex", "bt", "--args", &format!("{}/{}/debug/{}", HONGGFUZZ_TARGET, target_triple(), target)]);
+        }
+    };
 
     cmd 
 }
@@ -49,7 +52,7 @@ fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=Stri
         let status = debugger_command(&target)
             .args(args)
             .env("CARGO_HONGGFUZZ_CRASH_FILENAME", crash_filename)
-            .env("RUST_BACKTRACE", env::var("RUST_BACKTRACE").unwrap_or("1".to_string()))
+            .env("RUST_BACKTRACE", env::var("RUST_BACKTRACE").unwrap_or("1".into()))
             .status()
             .unwrap();
         if !status.success() {
