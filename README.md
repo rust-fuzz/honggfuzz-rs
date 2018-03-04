@@ -87,7 +87,7 @@ cargo hfuzz run example
 Once you got a crash, replay it easily in a debug environment
 
 ```sh
-# builds the target in debug mode and replays automatically the crash in gdb
+# builds the target in debug mode and replays automatically the crash in rust-lldb
 cargo hfuzz run-debug example fuzzing_workspace/*.fuzz
 ```
 
