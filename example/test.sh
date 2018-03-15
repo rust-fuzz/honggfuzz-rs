@@ -54,7 +54,7 @@ RUSTFLAGS="" cargo build
 
 # but when we run it, it should fail with a useful error message and status 17
 set +e
-cargo run
+RUSTFLAGS="" cargo run
 status=$?
 set -e
 test $status -eq 17
