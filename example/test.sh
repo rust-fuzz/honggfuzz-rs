@@ -50,7 +50,7 @@ test ! -e hfuzz_target
 test ! -e target
 
 # verify that we can build the target without instrumentation
-cargo build
+RUSTFLAGS="" cargo build
 
 # but when we run it, it should fail with a useful error message and status 17
 set +e
