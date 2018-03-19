@@ -10,6 +10,7 @@ matrix:
   allow_failures:
     - os: osx
       rust: stable
+    - rust: nightly
 #  exclude:
 #    - os: osx
 #      rust: stable
