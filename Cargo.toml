@@ -10,7 +10,7 @@ readme = "README.md"
 keywords = ["honggfuzz", "security", "fuzzer", "fuzzing", "testing"]
 categories = ["development-tools::testing"]
 description = """
-Fuzz your Rust code with Honggfuzz !
+Fuzz your Rust code with Google's developped Honggfuzz !
 """
 
 exclude = [
