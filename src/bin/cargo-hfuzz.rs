@@ -18,6 +18,12 @@ fn target_triple() -> String {
     triple.into()
 }
 
+fn cd_to_crate_root() {
+    while !Path::new("Cargo.toml").is_file() {
+        assert!(env::set_current_dir("..").is_ok());
+    }
+}
+
 fn debugger_command(target: &str) -> Command {
     let debugger = env::var("HFUZZ_DEBUGGER").unwrap_or("rust-lldb".into());
     let mut cmd = Command::new(&debugger);
@@ -171,6 +177,9 @@ fn main() {
         eprintln!("please launch as a cargo subcommand: \"cargo hfuzz ...\"");
         process::exit(1);
     }
+
+    // change to crate root to have the same behavior as cargo build/run
+    cd_to_crate_root();
 
     match args.next() {
         Some(ref s) if s == "build" => {
