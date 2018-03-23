@@ -19,9 +19,20 @@ fn target_triple() -> String {
 }
 
 fn cd_to_crate_root() {
-    while !Path::new("Cargo.toml").is_file() {
-        assert!(env::set_current_dir("..").is_ok());
+    let mut path = env::current_dir().unwrap();
+
+    while !path.join("Cargo.toml").is_file() {
+        // move to parent path
+        path = match path.parent() {
+            Some(parent) => parent.into(),
+            None => {
+                eprintln!("error: could not find `Cargo.toml` in current directory or any parent directory");
+                process::exit(1);
+            }
+        };
     }
+
+    env::set_current_dir(path).unwrap();
 }
 
 fn debugger_command(target: &str) -> Command {
