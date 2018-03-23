@@ -39,8 +39,13 @@ status=$?
 set -e
 test $status -eq 101
 
-# clean
+# run `hfuzz clean` from a subdirectory just to check that hfuzz subcommands are run at the crate root
+mkdir subdirectory
+cd subdirectory
 cargo hfuzz clean
+cd ..
+rmdir subdirectory
+
 rm -rf hfuzz_workspace
 
 # verify that the hfuzz_target has been cleaned
