@@ -148,9 +148,9 @@ extern "C" {
 /// For perstistent fuzzing to work, you have to call it ad vita aeternam in an infinite loop.
 ///
 /// ```rust,should_panic
-/// extern crate honggfuzz;
-/// use honggfuzz::fuzz;
-///
+/// # extern crate honggfuzz;
+/// # use honggfuzz::fuzz;
+/// # fn main() {
 /// loop {
 ///     fuzz(|data|{
 ///         if data.len() != 6 {return}
@@ -163,6 +163,7 @@ extern "C" {
 ///         panic!("BOOM")
 ///     });
 /// }
+/// # }
 /// ```
 #[cfg(not(fuzzing))]
 #[allow(unused_variables)]
