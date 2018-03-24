@@ -32,7 +32,7 @@
 //! 
 //! Create a target to fuzz
 //! 
-//! ```rust
+//! ```rust,should_panic
 //! #[macro_use] extern crate honggfuzz;
 //! 
 //! fn main() {
@@ -147,7 +147,7 @@ extern "C" {
 ///
 /// For perstistent fuzzing to work, you have to call it ad vita aeternam in an infinite loop.
 ///
-/// ```
+/// ```rust,should_panic
 /// extern crate honggfuzz;
 /// use honggfuzz::fuzz;
 ///
@@ -218,9 +218,10 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
 ///
 /// For perstistent fuzzing to work, you have to call it ad vita aeternam in an infinite loop.
 ///
-/// ```
-/// #[macro_use] extern crate honggfuzz;
-///
+/// ```rust,should_panic
+/// # #[macro_use] extern crate honggfuzz;
+/// 
+/// # fn main() {
 /// loop {
 ///     fuzz!(|data: &[u8]| {
 ///         if data.len() != 6 {return}
@@ -233,6 +234,7 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
 ///         panic!("BOOM")
 ///     });
 /// }
+/// # }
 /// ```
 #[cfg(not(fuzzing))]
 #[macro_export]
