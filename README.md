@@ -98,6 +98,12 @@ Clean
 cargo hfuzz clean 
 ```
 
+Version
+
+```sh
+cargo hfuzz version
+```
+
 ### Environment variables
 
 #### `RUSTFLAGS`
