@@ -58,12 +58,14 @@ fn debugger_command(target: &str) -> Command {
 }
 
 fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=String> {
-    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or(HONGGFUZZ_TARGET.into());
-
     let target = args.next().unwrap_or_else(||{
         eprintln!("please specify the name of the target like this \"cargo hfuzz run[-debug] TARGET [ ARGS ... ]\"");
         process::exit(1);
     });
+
+    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or(HONGGFUZZ_TARGET.into());
+    let honggfuzz_workspace = env::var("HFUZZ_WORKSPACE").unwrap_or(HONGGFUZZ_WORKSPACE.into());
+    let honggfuzz_input = env::var("HFUZZ_INPUT").unwrap_or(format!("{}/{}/input", honggfuzz_workspace, target));
 
     hfuzz_build(vec!["--bin".to_string(), target.clone()].into_iter(), debug);
 
@@ -95,13 +97,13 @@ fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=Stri
         // FIXME: we split by whitespace without respecting escaping or quotes
         let hfuzz_run_args = hfuzz_run_args.split_whitespace();
 
-        fs::create_dir_all(&format!("{}/{}/input", HONGGFUZZ_WORKSPACE, target)).unwrap_or_else(|_| {
-            println!("error: failed to create \"{}/{}/input\"", HONGGFUZZ_WORKSPACE, target);
+        fs::create_dir_all(&format!("{}/{}/input", &honggfuzz_workspace, target)).unwrap_or_else(|_| {
+            println!("error: failed to create \"{}/{}/input\"", &honggfuzz_workspace, target);
         });
 
         let command = format!("{}/honggfuzz", &honggfuzz_target);
         Command::new(&command) // exec honggfuzz replacing current process
-            .args(&["-W", &format!("{}/{}", HONGGFUZZ_WORKSPACE, target), "-f", &format!("{}/{}/input", HONGGFUZZ_WORKSPACE, target), "-P"])
+            .args(&["-W", &format!("{}/{}", &honggfuzz_workspace, target), "-f", &honggfuzz_input, "-P"])
             .args(hfuzz_run_args) // allows user-specified arguments to be given to honggfuzz
             .args(&["--", &format!("{}/{}/release/{}", &honggfuzz_target, target_triple(), target)])
             .args(args)
