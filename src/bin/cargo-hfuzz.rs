@@ -18,6 +18,10 @@ fn target_triple() -> String {
     triple.into()
 }
 
+fn hfuzz_version() {
+    println!("cargo-hfuzz {}", VERSION);
+}
+
 fn cd_to_crate_root() {
     let mut path = env::current_dir().unwrap();
 
@@ -208,8 +212,11 @@ fn main() {
         Some(ref s) if s == "clean" => {
             hfuzz_clean(args);
         }
+        Some(ref s) if s == "version" => {
+            hfuzz_version();
+        }
         _ => {
-            eprintln!("possible commands are: run, run-debug, build, build-debug, clean");
+            eprintln!("possible commands are: run, run-debug, build, build-debug, clean, version");
             process::exit(1);
         }
     }
