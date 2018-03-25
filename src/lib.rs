@@ -158,7 +158,6 @@
 //! ```rust
 //! # extern crate rand;
 //! # use rand::{Rng, StdRng, SeedableRng};
-//! 
 //! #[cfg(fuzzing)]
 //! let mut rng = rand::StdRng::from_seed(&[0]);
 //! #[cfg(not(fuzzing))]
@@ -270,7 +269,6 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
 ///
 /// ```rust,should_panic
 /// # #[macro_use] extern crate honggfuzz;
-/// 
 /// # fn main() {
 /// loop {
 ///     fuzz!(|data: &[u8]| {
