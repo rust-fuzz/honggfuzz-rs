@@ -47,7 +47,7 @@ honggfuzz = "0.5"
 
 Create a target to fuzz
 
-```rust,should_panic
+```rust
 #[macro_use] extern crate honggfuzz;
 
 fn main() {
