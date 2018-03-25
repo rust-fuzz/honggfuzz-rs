@@ -158,10 +158,12 @@
 //! ```rust
 //! # extern crate rand;
 //! # use rand::{Rng, StdRng, SeedableRng};
+//! # fn main() {
 //! #[cfg(fuzzing)]
 //! let mut rng = rand::StdRng::from_seed(&[0]);
 //! #[cfg(not(fuzzing))]
 //! let mut rng = rand::thread_rng();
+//! # }
 //! ```
 //! 
 //! Also, when building in debug mode, the `fuzzing_debug` argument is added in addition to `fuzzing`.
