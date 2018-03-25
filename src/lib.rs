@@ -126,6 +126,18 @@
 //! 
 //! By default we use `rust-lldb` but you can change it to `rust-gdb`, `gdb`, `/usr/bin/lldb-7` ...
 //! 
+//! #### `CARGO_TARGET_DIR`
+//! 
+//! Target compilation directory, defaults to `hfuzz_target` to not clash with `cargo build`'s default `target` directory.
+//! 
+//! #### `HFUZZ_WORKSPACE`
+//! 
+//! Honggfuzz working directory, defaults to `hfuzz_workspace`.
+//! 
+//! #### `HFUZZ_INPUT`
+//! 
+//! Honggfuzz input files (also called "corpus"), defaults to `$HFUZZ_WORKSPACE/{TARGET}/input`.
+//! 
 //! ## Relevant documentation about honggfuzz
 //! * [USAGE](https://github.com/google/honggfuzz/blob/master/docs/USAGE.md)
 //! * [FeedbackDrivenFuzzing](https://github.com/google/honggfuzz/blob/master/docs/FeedbackDrivenFuzzing.md)
