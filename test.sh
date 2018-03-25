@@ -7,6 +7,7 @@ cargo update
 
 # install cargo subcommands
 cargo install --force --verbose
+cargo hfuzz version
 
 cd example
 
