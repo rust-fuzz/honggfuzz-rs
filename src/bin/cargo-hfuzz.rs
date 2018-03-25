@@ -41,14 +41,16 @@ fn cd_to_crate_root() {
 
 fn debugger_command(target: &str) -> Command {
     let debugger = env::var("HFUZZ_DEBUGGER").unwrap_or("rust-lldb".into());
+    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or(HONGGFUZZ_TARGET.into());
+
     let mut cmd = Command::new(&debugger);
 
     match Path::new(&debugger).file_name().map(|f| f.to_string_lossy().contains("lldb")) {
         Some(true) => {
-            cmd.args(&["-o", "b rust_panic", "-o", "r", "-o", "bt", "-f", &format!("{}/{}/debug/{}", HONGGFUZZ_TARGET, target_triple(), target), "--"]);
+            cmd.args(&["-o", "b rust_panic", "-o", "r", "-o", "bt", "-f", &format!("{}/{}/debug/{}", &honggfuzz_target, target_triple(), target), "--"]);
         }
         _ => {
-            cmd.args(&["-ex", "b rust_panic", "-ex", "r", "-ex", "bt", "--args", &format!("{}/{}/debug/{}", HONGGFUZZ_TARGET, target_triple(), target)]);
+            cmd.args(&["-ex", "b rust_panic", "-ex", "r", "-ex", "bt", "--args", &format!("{}/{}/debug/{}", &honggfuzz_target, target_triple(), target)]);
         }
     };
 
@@ -56,6 +58,7 @@ fn debugger_command(target: &str) -> Command {
 }
 
 fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=String> {
+    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or(HONGGFUZZ_TARGET.into());
 
     let target = args.next().unwrap_or_else(||{
         eprintln!("please specify the name of the target like this \"cargo hfuzz run[-debug] TARGET [ ARGS ... ]\"");
@@ -96,11 +99,11 @@ fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=Stri
             println!("error: failed to create \"{}/{}/input\"", HONGGFUZZ_WORKSPACE, target);
         });
 
-        let command = format!("{}/honggfuzz", HONGGFUZZ_TARGET);
+        let command = format!("{}/honggfuzz", &honggfuzz_target);
         Command::new(&command) // exec honggfuzz replacing current process
             .args(&["-W", &format!("{}/{}", HONGGFUZZ_WORKSPACE, target), "-f", &format!("{}/{}/input", HONGGFUZZ_WORKSPACE, target), "-P"])
             .args(hfuzz_run_args) // allows user-specified arguments to be given to honggfuzz
-            .args(&["--", &format!("{}/{}/release/{}", HONGGFUZZ_TARGET, target_triple(), target)])
+            .args(&["--", &format!("{}/{}/release/{}", &honggfuzz_target, target_triple(), target)])
             .args(args)
             .env("ASAN_OPTIONS", asan_options)
             .env("TSAN_OPTIONS", tsan_options)
@@ -113,6 +116,8 @@ fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=Stri
 }
 
 fn hfuzz_build<T>(args: T, debug: bool) where T: std::iter::Iterator<Item=String> {
+    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or(HONGGFUZZ_TARGET.into());
+
     let mut rustflags = "\
     --cfg fuzzing \
     -C debug-assertions \
@@ -159,12 +164,12 @@ fn hfuzz_build<T>(args: T, debug: bool) where T: std::iter::Iterator<Item=String
         .args(args)
         .args(hfuzz_build_args) // allows user-specified arguments to be given to cargo build
         .env("RUSTFLAGS", rustflags)
-        .env("CARGO_TARGET_DIR", HONGGFUZZ_TARGET); // change target_dir to not clash with regular builds
+        .env("CARGO_TARGET_DIR", &honggfuzz_target); // change target_dir to not clash with regular builds
     
     if !debug {
         command.arg("--release")
             .env("CARGO_HONGGFUZZ_BUILD_VERSION", VERSION)   // used by build.rs to check that versions are in sync
-            .env("CARGO_HONGGFUZZ_TARGET_DIR", HONGGFUZZ_TARGET); // env variable to be read by build.rs script 
+            .env("CARGO_HONGGFUZZ_TARGET_DIR", &honggfuzz_target); // env variable to be read by build.rs script 
     }                                                                 // to place honggfuzz executable at a known location
 
     let status = command.status().unwrap();
@@ -174,11 +179,12 @@ fn hfuzz_build<T>(args: T, debug: bool) where T: std::iter::Iterator<Item=String
 }
 
 fn hfuzz_clean<T>(args: T) where T: std::iter::Iterator<Item=String> {
+    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or(HONGGFUZZ_TARGET.into());
     let cargo_bin = env::var("CARGO").unwrap();
     let status = Command::new(cargo_bin)
         .args(&["clean"])
         .args(args)
-        .env("CARGO_TARGET_DIR", HONGGFUZZ_TARGET) // change target_dir to not clash with regular builds
+        .env("CARGO_TARGET_DIR", &honggfuzz_target) // change target_dir to not clash with regular builds
         .status()
         .unwrap();
     if !status.success() {
