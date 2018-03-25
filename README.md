@@ -153,6 +153,34 @@ Honggfuzz working directory, defaults to `hfuzz_workspace`.
 
 Honggfuzz input files (also called "corpus"), defaults to `$HFUZZ_WORKSPACE/{TARGET}/input`.
 
+## Conditionnal compilation
+
+Sometimes, it is necessary to make some specific adaptation to your code to yield a better fuzzing efficiency.
+
+For instance:
+- Make you software behavior as much as possible deterministic on the fuzzing input
+  - [PRNG](https://en.wikipedia.org/wiki/Pseudorandom_number_generator)s must be seeded with a constant or the fuzzer input
+  - Behavior shouldn't change based on the computer's clock.
+  - Avoid potential undeterministic behavior from racing threads.
+  - ...
+- Never ever call `std::process::exit()`.
+- Disable logging and other unnecessary functionnalities.
+- Try to avoid modifying global state when possible.
+
+
+When building with `cargo hfuzz`, the argument `--cfg fuzzing` is passed to `rustc` to allow you to condition the compilation of thoses adaptations thanks to the `cfg` macro like so:
+
+```rust
+#[cfg(fuzzing)]
+let mut rng = rand::StdRng::from_seed(&[0]);
+#[cfg(not(fuzzing))]
+let mut rng = rand::thread_rng();
+```
+
+Also, when building in debug mode, the `fuzzing_debug` argument is added in addition to `fuzzing`.
+
+For more information about conditional compilation, please see the [reference](https://doc.rust-lang.org/reference/attributes.html#conditional-compilation).
+
 ## Relevant documentation about honggfuzz
 * [USAGE](https://github.com/google/honggfuzz/blob/master/docs/USAGE.md)
 * [FeedbackDrivenFuzzing](https://github.com/google/honggfuzz/blob/master/docs/FeedbackDrivenFuzzing.md)
