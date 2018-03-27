@@ -286,21 +286,7 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
 /// }
 /// # }
 /// ```
-#[cfg(not(fuzzing))]
-#[macro_export]
-macro_rules! fuzz {
-    (|$buf:ident| $body:block) => {
-        honggfuzz::fuzz(|_| {});
-    };
-    (|$buf:ident: &[u8]| $body:block) => {
-        honggfuzz::fuzz(|_| {});
-    };
-    (|$buf:ident: $dty: ty| $body:block) => {
-        honggfuzz::fuzz(|_| {});
-    };
-}
 
-#[cfg(all(fuzzing))]
 #[macro_export]
 macro_rules! fuzz {
     (|$buf:ident| $body:block) => {
