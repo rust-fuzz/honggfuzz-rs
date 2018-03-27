@@ -9,7 +9,7 @@ const HONGGFUZZ_TARGET: &'static str = "hfuzz_target";
 const HONGGFUZZ_WORKSPACE: &'static str = "hfuzz_workspace";
 
 #[cfg(target_family="windows")]
-compile_error!("honggfuzz-rs does not currenlty support Windows but works well under WSL (Windows Subsystem for Linux)");
+compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
 
 fn target_triple() -> String {
     let output = Command::new("rustc").args(&["-v", "-V"]).output().unwrap();
