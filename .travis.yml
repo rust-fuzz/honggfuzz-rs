@@ -8,8 +8,7 @@ os:
   - osx
 matrix:
   allow_failures:
-    - os: osx
-      rust: stable
+#    - os: osx
 #  exclude:
 #    - os: osx
 #      rust: stable
