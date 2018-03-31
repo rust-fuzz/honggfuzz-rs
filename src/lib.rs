@@ -244,20 +244,24 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
     
     let filename = env::var("CARGO_HONGGFUZZ_CRASH_FILENAME").unwrap_or_else(|_|{
         eprintln!("error: Environment variable CARGO_HONGGFUZZ_CRASH_FILENAME not set. Try launching with \"cargo hfuzz run-debug TARGET CRASH_FILENAME [ ARGS ... ]\"");
-        std::process::exit(1)
+        std::process::exit(1);
     });
 
     let file = File::open(&filename).unwrap_or_else(|_|{
         eprintln!("error: failed to open \"{}\"", &filename);
-        std::process::exit(1)
+        std::process::exit(1);
     });
 
     let mmap = unsafe {MmapOptions::new().map(&file)}.unwrap_or_else(|_|{
         eprintln!("error: failed to mmap file \"{}\"", &filename);
-        std::process::exit(1)
+        std::process::exit(1);
     });
 
     closure(&mmap);
+
+    eprintln!("This crashfile didn't trigger any panics...");
+    eprintln!("Are you sure that you selected the correct crashfile and that your program's behavior is entirely deterministic and only dependent on the fuzzing input?");
+    std::process::exit(2);
 }
 
 /// Fuzz a closure-like block of code by passing it an object of arbitrary type.
