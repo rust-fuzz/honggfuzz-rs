@@ -4,7 +4,7 @@ use std::process::Command;
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 #[cfg(target_family="windows")]
-compile_error!("honggfuzz-rs does not currenlty support Windows but works well under WSL (Windows Subsystem for Linux)");
+compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
 
 #[cfg(not(any(target_os = "freebsd", target_os = "dragonfly", target_os = "bitrig", target_os = "openbsd", target_os = "netbsd")))]
 const GNU_MAKE: &'static str = "make";
