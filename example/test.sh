@@ -32,12 +32,19 @@ status=$?
 set -e
 test $status -eq 1
 
-# try to launch the debug executable with the crash file, it should fail with error code 101
+# try to launch the debug executable with the crash file, it should fail with error code 101 (rust panic's error code)
 set +e
 CARGO_HONGGFUZZ_CRASH_FILENAME="$crash_path" hfuzz_target/*/debug/example
 status=$?
 set -e
 test $status -eq 101
+
+# try to launch the debug executable with the an incorrect crash file, it should fail with error code 2
+set +e
+CARGO_HONGGFUZZ_CRASH_FILENAME="test.sh" hfuzz_target/*/debug/example
+status=$?
+set -e
+test $status -eq 2
 
 # run `hfuzz clean` from a subdirectory just to check that hfuzz subcommands are run at the crate root
 mkdir subdirectory
