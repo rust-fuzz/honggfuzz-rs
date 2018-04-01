@@ -65,7 +65,7 @@
 //! Fuzz for fun and profit !
 //! 
 //! ```sh
-//! # builds with fuzzing instrumentation and then runs the "example" target
+//! # builds with fuzzing instrumentation and then fuzz the "example" target
 //! cargo hfuzz run example
 //! ```
 //! 
@@ -74,6 +74,15 @@
 //! ```sh
 //! # builds the target in debug mode and replays automatically the crash in gdb
 //! cargo hfuzz run-debug example fuzzing_workspace/*.fuzz
+//! ```
+//! 
+//! You can also build and run your project without compile-time software instrumentation (LLVM's SanCov passes)
+//! 
+//! This allows you for example to try hardware-only feedback driven fuzzing:
+//! 
+//! ```sh
+//! # builds without fuzzing instrumentation and then fuzz the "example" target using hardware-based feedback
+//! HFUZZ_RUN_ARGS="--linux_perf_ipt_block --linux_perf_instr --linux_perf_branch" cargo hfuzz run-no-instr example
 //! ```
 //! 
 //! Clean
@@ -218,7 +227,7 @@ extern "C" {
 #[cfg(not(fuzzing))]
 #[allow(unused_variables)]
 pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
-    eprintln!("This executable hasn't been built with honggfuzz instrumentation.");
+    eprintln!("This executable hasn't been built with \"cargo hfuzz\".");
     eprintln!("Try executing \"cargo hfuzz build\" and check out \"hfuzz_target\" directory.");
     eprintln!("Or execute \"cargo hfuzz run TARGET\"");
     std::process::exit(17);

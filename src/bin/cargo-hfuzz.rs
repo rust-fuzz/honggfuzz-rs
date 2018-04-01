@@ -66,7 +66,7 @@ fn debugger_command(target: &str) -> Command {
 
 fn hfuzz_run<T>(mut args: T, build_type: &BuildType) where T: std::iter::Iterator<Item=String> {
     let target = args.next().unwrap_or_else(||{
-        eprintln!("please specify the name of the target like this \"cargo hfuzz run[-debug] TARGET [ ARGS ... ]\"");
+        eprintln!("please specify the name of the target like this \"cargo hfuzz run[-debug|-no-instr] TARGET [ ARGS ... ]\"");
         process::exit(1);
     });
 
@@ -121,7 +121,7 @@ fn hfuzz_run<T>(mut args: T, build_type: &BuildType) where T: std::iter::Iterato
                 .exec();
 
             // code flow will only reach here if honggfuzz failed to execute
-            eprintln!("cannot execute {}, try to execute \"cargo hfuzz-build\" from fuzzed project directory", &command);
+            eprintln!("cannot execute {}, try to execute \"cargo hfuzz build\" from fuzzed project directory", &command);
             process::exit(1);
         }
     }
@@ -226,7 +226,7 @@ fn main() {
         Some(ref s) if s == "build" => {
             hfuzz_build(args, &BuildType::ReleaseInstrumented);
         }
-        Some(ref s) if s == "build-no-inst" => {
+        Some(ref s) if s == "build-no-instr" => {
             hfuzz_build(args, &BuildType::ReleaseNotInstrumented);
         }
         Some(ref s) if s == "build-debug" => {
@@ -235,7 +235,7 @@ fn main() {
         Some(ref s) if s == "run" => {
             hfuzz_run(args, &BuildType::ReleaseInstrumented);
         }
-        Some(ref s) if s == "run-no-inst" => {
+        Some(ref s) if s == "run-no-instr" => {
             hfuzz_run(args, &BuildType::ReleaseNotInstrumented);
         }
         Some(ref s) if s == "run-debug" => {
@@ -248,7 +248,7 @@ fn main() {
             hfuzz_version();
         }
         _ => {
-            eprintln!("possible commands are: run, run-debug, build, build-debug, clean, version");
+            eprintln!("possible commands are: run, run-no-instr, run-debug, build, build-no-instr, build-debug, clean, version");
             process::exit(1);
         }
     }

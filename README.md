@@ -80,7 +80,7 @@ fn main() {
 Fuzz for fun and profit !
 
 ```sh
-# builds with fuzzing instrumentation and then runs the "example" target
+# builds with fuzzing instrumentation and then fuzz the "example" target
 cargo hfuzz run example
 ```
 
@@ -89,6 +89,15 @@ Once you got a crash, replay it easily in a debug environment
 ```sh
 # builds the target in debug mode and replays automatically the crash in rust-lldb
 cargo hfuzz run-debug example fuzzing_workspace/*.fuzz
+```
+
+You can also build and run your project without compile-time software instrumentation (LLVM's SanCov passes)
+
+This allows you for example to try hardware-only feedback driven fuzzing:
+
+```sh
+# builds without fuzzing instrumentation and then fuzz the "example" target using hardware-based feedback
+HFUZZ_RUN_ARGS="--linux_perf_ipt_block --linux_perf_instr --linux_perf_branch" cargo hfuzz run-no-instr example
 ```
 
 Clean
