@@ -11,6 +11,13 @@ const HONGGFUZZ_WORKSPACE: &'static str = "hfuzz_workspace";
 #[cfg(target_family="windows")]
 compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
 
+#[derive(PartialEq)]
+enum BuildType {
+    ReleaseInstrumented,
+    ReleaseNotInstrumented,
+    Debug
+}
+
 fn target_triple() -> String {
     let output = Command::new("rustc").args(&["-v", "-V"]).output().unwrap();
     let stdout = String::from_utf8(output.stdout).unwrap();
@@ -57,7 +64,7 @@ fn debugger_command(target: &str) -> Command {
     cmd 
 }
 
-fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=String> {
+fn hfuzz_run<T>(mut args: T, build_type: &BuildType) where T: std::iter::Iterator<Item=String> {
     let target = args.next().unwrap_or_else(||{
         eprintln!("please specify the name of the target like this \"cargo hfuzz run[-debug] TARGET [ ARGS ... ]\"");
         process::exit(1);
@@ -67,57 +74,60 @@ fn hfuzz_run<T>(mut args: T, debug: bool) where T: std::iter::Iterator<Item=Stri
     let honggfuzz_workspace = env::var("HFUZZ_WORKSPACE").unwrap_or(HONGGFUZZ_WORKSPACE.into());
     let honggfuzz_input = env::var("HFUZZ_INPUT").unwrap_or(format!("{}/{}/input", honggfuzz_workspace, target));
 
-    hfuzz_build(vec!["--bin".to_string(), target.clone()].into_iter(), debug);
+    hfuzz_build(vec!["--bin".to_string(), target.clone()].into_iter(), build_type);
 
-    if debug {
-        let crash_filename = args.next().unwrap_or_else(||{
-            eprintln!("please specify the crash filename like this \"cargo hfuzz run-debug TARGET CRASH_FILENAME [ ARGS ... ]\"");
-            process::exit(1);
-        });
+    match *build_type {
+        BuildType::Debug => {
+            let crash_filename = args.next().unwrap_or_else(||{
+                eprintln!("please specify the crash filename like this \"cargo hfuzz run-debug TARGET CRASH_FILENAME [ ARGS ... ]\"");
+                process::exit(1);
+            });
 
-        let status = debugger_command(&target)
-            .args(args)
-            .env("CARGO_HONGGFUZZ_CRASH_FILENAME", crash_filename)
-            .env("RUST_BACKTRACE", env::var("RUST_BACKTRACE").unwrap_or("1".into()))
-            .status()
-            .unwrap();
-        if !status.success() {
-             process::exit(status.code().unwrap_or(1));
+            let status = debugger_command(&target)
+                .args(args)
+                .env("CARGO_HONGGFUZZ_CRASH_FILENAME", crash_filename)
+                .env("RUST_BACKTRACE", env::var("RUST_BACKTRACE").unwrap_or("1".into()))
+                .status()
+                .unwrap();
+            if !status.success() {
+                 process::exit(status.code().unwrap_or(1));
+            }
         }
-    } else {
-        // add some flags to sanitizers to make them work with Rust code
-        let asan_options = env::var("ASAN_OPTIONS").unwrap_or_default();
-        let asan_options = format!("detect_odr_violation=0:{}", asan_options);
+        _ => {
+            // add some flags to sanitizers to make them work with Rust code
+            let asan_options = env::var("ASAN_OPTIONS").unwrap_or_default();
+            let asan_options = format!("detect_odr_violation=0:{}", asan_options);
 
-        let tsan_options = env::var("TSAN_OPTIONS").unwrap_or_default();
-        let tsan_options = format!("report_signal_unsafe=0:{}", tsan_options);
+            let tsan_options = env::var("TSAN_OPTIONS").unwrap_or_default();
+            let tsan_options = format!("report_signal_unsafe=0:{}", tsan_options);
 
-        // get user-defined args for honggfuzz
-        let hfuzz_run_args = env::var("HFUZZ_RUN_ARGS").unwrap_or_default();
-        // FIXME: we split by whitespace without respecting escaping or quotes
-        let hfuzz_run_args = hfuzz_run_args.split_whitespace();
+            // get user-defined args for honggfuzz
+            let hfuzz_run_args = env::var("HFUZZ_RUN_ARGS").unwrap_or_default();
+            // FIXME: we split by whitespace without respecting escaping or quotes
+            let hfuzz_run_args = hfuzz_run_args.split_whitespace();
 
-        fs::create_dir_all(&format!("{}/{}/input", &honggfuzz_workspace, target)).unwrap_or_else(|_| {
-            println!("error: failed to create \"{}/{}/input\"", &honggfuzz_workspace, target);
-        });
+            fs::create_dir_all(&format!("{}/{}/input", &honggfuzz_workspace, target)).unwrap_or_else(|_| {
+                println!("error: failed to create \"{}/{}/input\"", &honggfuzz_workspace, target);
+            });
 
-        let command = format!("{}/honggfuzz", &honggfuzz_target);
-        Command::new(&command) // exec honggfuzz replacing current process
-            .args(&["-W", &format!("{}/{}", &honggfuzz_workspace, target), "-f", &honggfuzz_input, "-P"])
-            .args(hfuzz_run_args) // allows user-specified arguments to be given to honggfuzz
-            .args(&["--", &format!("{}/{}/release/{}", &honggfuzz_target, target_triple(), target)])
-            .args(args)
-            .env("ASAN_OPTIONS", asan_options)
-            .env("TSAN_OPTIONS", tsan_options)
-            .exec();
+            let command = format!("{}/honggfuzz", &honggfuzz_target);
+            Command::new(&command) // exec honggfuzz replacing current process
+                .args(&["-W", &format!("{}/{}", &honggfuzz_workspace, target), "-f", &honggfuzz_input, "-P"])
+                .args(hfuzz_run_args) // allows user-specified arguments to be given to honggfuzz
+                .args(&["--", &format!("{}/{}/release/{}", &honggfuzz_target, target_triple(), target)])
+                .args(args)
+                .env("ASAN_OPTIONS", asan_options)
+                .env("TSAN_OPTIONS", tsan_options)
+                .exec();
 
-        // code flow will only reach here if honggfuzz failed to execute
-        eprintln!("cannot execute {}, try to execute \"cargo hfuzz-build\" from fuzzed project directory", &command);
-        process::exit(1);
+            // code flow will only reach here if honggfuzz failed to execute
+            eprintln!("cannot execute {}, try to execute \"cargo hfuzz-build\" from fuzzed project directory", &command);
+            process::exit(1);
+        }
     }
 }
 
-fn hfuzz_build<T>(args: T, debug: bool) where T: std::iter::Iterator<Item=String> {
+fn hfuzz_build<T>(args: T, build_type: &BuildType) where T: std::iter::Iterator<Item=String> {
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or(HONGGFUZZ_TARGET.into());
 
     let mut rustflags = "\
@@ -126,30 +136,38 @@ fn hfuzz_build<T>(args: T, debug: bool) where T: std::iter::Iterator<Item=String
     -C overflow_checks \
     ".to_string();
 
-    if debug {
-        rustflags.push_str("\
-        --cfg fuzzing_debug \
-        -C panic=unwind \
-        -C opt-level=0 \
-        -C debuginfo=2 \
-        ");
-    } else {
-        rustflags.push_str("\
-        -C panic=abort \
-        -C opt-level=3 \
-        -C debuginfo=0 \
-        -C passes=sancov \
-        -C llvm-args=-sanitizer-coverage-level=4 \
-        -C llvm-args=-sanitizer-coverage-trace-pc-guard \
-        -C llvm-args=-sanitizer-coverage-prune-blocks=0 \
-        ");
-    }
+    match *build_type {
+        BuildType::Debug => {
+            rustflags.push_str("\
+            --cfg fuzzing_debug \
+            -C panic=unwind \
+            -C opt-level=0 \
+            -C debuginfo=2 \
+            ");
+        }
+        _ => {
+            rustflags.push_str("\
+            -C panic=abort \
+            -C opt-level=3 \
+            -C debuginfo=0 \
+            ");
 
-    // trace-compares doesn't work on macOS without sanitizer
-    if cfg!(not(target_os="macos")) {
-        rustflags.push_str("\
-        -C llvm-args=-sanitizer-coverage-trace-compares \
-        ");
+            if *build_type == BuildType::ReleaseInstrumented {
+                rustflags.push_str("\
+                -C passes=sancov \
+                -C llvm-args=-sanitizer-coverage-level=4 \
+                -C llvm-args=-sanitizer-coverage-trace-pc-guard \
+                -C llvm-args=-sanitizer-coverage-prune-blocks=0 \
+                ");
+
+                // trace-compares doesn't work on macOS without a sanitizer
+                if cfg!(not(target_os="macos")) {
+                    rustflags.push_str("\
+                    -C llvm-args=-sanitizer-coverage-trace-compares \
+                    ");
+                }
+            }
+        }
     }
 
     // add user provided flags
@@ -168,11 +186,11 @@ fn hfuzz_build<T>(args: T, debug: bool) where T: std::iter::Iterator<Item=String
         .env("RUSTFLAGS", rustflags)
         .env("CARGO_TARGET_DIR", &honggfuzz_target); // change target_dir to not clash with regular builds
     
-    if !debug {
+    if *build_type != BuildType::Debug {
         command.arg("--release")
             .env("CARGO_HONGGFUZZ_BUILD_VERSION", VERSION)   // used by build.rs to check that versions are in sync
             .env("CARGO_HONGGFUZZ_TARGET_DIR", &honggfuzz_target); // env variable to be read by build.rs script 
-    }                                                                 // to place honggfuzz executable at a known location
+    }                                                              // to place honggfuzz executable at a known location
 
     let status = command.status().unwrap();
     if !status.success() {
@@ -206,16 +224,22 @@ fn main() {
 
     match args.next() {
         Some(ref s) if s == "build" => {
-            hfuzz_build(args, false);
+            hfuzz_build(args, &BuildType::ReleaseInstrumented);
+        }
+        Some(ref s) if s == "build-no-inst" => {
+            hfuzz_build(args, &BuildType::ReleaseNotInstrumented);
         }
         Some(ref s) if s == "build-debug" => {
-            hfuzz_build(args, true);
+            hfuzz_build(args, &BuildType::Debug);
         }
         Some(ref s) if s == "run" => {
-            hfuzz_run(args, false);
+            hfuzz_run(args, &BuildType::ReleaseInstrumented);
+        }
+        Some(ref s) if s == "run-no-inst" => {
+            hfuzz_run(args, &BuildType::ReleaseNotInstrumented);
         }
         Some(ref s) if s == "run-debug" => {
-            hfuzz_run(args, true);
+            hfuzz_run(args, &BuildType::Debug);
         }
         Some(ref s) if s == "clean" => {
             hfuzz_clean(args);
