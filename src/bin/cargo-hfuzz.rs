@@ -4,9 +4,9 @@ use std::process::{self, Command};
 use std::os::unix::process::CommandExt;
 use std::path::Path;
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
-const HONGGFUZZ_TARGET: &'static str = "hfuzz_target";
-const HONGGFUZZ_WORKSPACE: &'static str = "hfuzz_workspace";
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+const HONGGFUZZ_TARGET: &str = "hfuzz_target";
+const HONGGFUZZ_WORKSPACE: &str = "hfuzz_workspace";
 
 #[cfg(target_family="windows")]
 compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
@@ -47,8 +47,8 @@ fn cd_to_crate_root() {
 }
 
 fn debugger_command(target: &str) -> Command {
-    let debugger = env::var("HFUZZ_DEBUGGER").unwrap_or("rust-lldb".into());
-    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or(HONGGFUZZ_TARGET.into());
+    let debugger = env::var("HFUZZ_DEBUGGER").unwrap_or_else(|_| "rust-lldb".into());
+    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
 
     let mut cmd = Command::new(&debugger);
 
@@ -70,9 +70,9 @@ fn hfuzz_run<T>(mut args: T, build_type: &BuildType) where T: std::iter::Iterato
         process::exit(1);
     });
 
-    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or(HONGGFUZZ_TARGET.into());
-    let honggfuzz_workspace = env::var("HFUZZ_WORKSPACE").unwrap_or(HONGGFUZZ_WORKSPACE.into());
-    let honggfuzz_input = env::var("HFUZZ_INPUT").unwrap_or(format!("{}/{}/input", honggfuzz_workspace, target));
+    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
+    let honggfuzz_workspace = env::var("HFUZZ_WORKSPACE").unwrap_or_else(|_| HONGGFUZZ_WORKSPACE.into());
+    let honggfuzz_input = env::var("HFUZZ_INPUT").unwrap_or_else(|_| format!("{}/{}/input", honggfuzz_workspace, target));
 
     hfuzz_build(vec!["--bin".to_string(), target.clone()].into_iter(), build_type);
 
@@ -86,7 +86,7 @@ fn hfuzz_run<T>(mut args: T, build_type: &BuildType) where T: std::iter::Iterato
             let status = debugger_command(&target)
                 .args(args)
                 .env("CARGO_HONGGFUZZ_CRASH_FILENAME", crash_filename)
-                .env("RUST_BACKTRACE", env::var("RUST_BACKTRACE").unwrap_or("1".into()))
+                .env("RUST_BACKTRACE", env::var("RUST_BACKTRACE").unwrap_or_else(|_| "1".into()))
                 .status()
                 .unwrap();
             if !status.success() {
@@ -128,7 +128,7 @@ fn hfuzz_run<T>(mut args: T, build_type: &BuildType) where T: std::iter::Iterato
 }
 
 fn hfuzz_build<T>(args: T, build_type: &BuildType) where T: std::iter::Iterator<Item=String> {
-    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or(HONGGFUZZ_TARGET.into());
+    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
 
     let mut rustflags = "\
     --cfg fuzzing \
@@ -199,7 +199,7 @@ fn hfuzz_build<T>(args: T, build_type: &BuildType) where T: std::iter::Iterator<
 }
 
 fn hfuzz_clean<T>(args: T) where T: std::iter::Iterator<Item=String> {
-    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or(HONGGFUZZ_TARGET.into());
+    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
     let cargo_bin = env::var("CARGO").unwrap();
     let status = Command::new(cargo_bin)
         .args(&["clean"])

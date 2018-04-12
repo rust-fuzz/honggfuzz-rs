@@ -2,7 +2,7 @@ use std::env;
 use std::process::{self, Command};
 use std::os::unix::process::CommandExt;
 
-const HONGGFUZZ_TARGET: &'static str = "hfuzz_target";
+const HONGGFUZZ_TARGET: &str = "hfuzz_target";
 
 #[cfg(target_family="windows")]
 compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
