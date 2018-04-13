@@ -162,7 +162,7 @@ Honggfuzz working directory, defaults to `hfuzz_workspace`.
 
 Honggfuzz input files (also called "corpus"), defaults to `$HFUZZ_WORKSPACE/{TARGET}/input`.
 
-## Conditionnal compilation
+## Conditional compilation
 
 Sometimes, it is necessary to make some specific adaptation to your code to yield a better fuzzing efficiency.
 
