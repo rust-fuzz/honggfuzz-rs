@@ -18,15 +18,12 @@ enum BuildType {
     Debug
 }
 
+// TODO: maybe use `rustc_version` crate
 fn target_triple() -> String {
     let output = Command::new("rustc").args(&["-v", "-V"]).output().unwrap();
     let stdout = String::from_utf8(output.stdout).unwrap();
     let triple = stdout.lines().filter(|l|{l.starts_with("host: ")}).nth(0).unwrap().get(6..).unwrap();
     triple.into()
-}
-
-fn hfuzz_version() {
-    println!("cargo-hfuzz {}", VERSION);
 }
 
 fn cd_to_crate_root() {
@@ -62,6 +59,10 @@ fn debugger_command(target: &str) -> Command {
     };
 
     cmd 
+}
+
+fn hfuzz_version() {
+    println!("cargo-hfuzz {}", VERSION);
 }
 
 fn hfuzz_run<T>(mut args: T, build_type: &BuildType) where T: std::iter::Iterator<Item=String> {
@@ -213,6 +214,8 @@ fn hfuzz_clean<T>(args: T) where T: std::iter::Iterator<Item=String> {
 }
 
 fn main() {
+    // TODO: maybe use `clap` crate
+
     let mut args = env::args().skip(1);
     if args.next() != Some("hfuzz".to_string()) {
         eprintln!("please launch as a cargo subcommand: \"cargo hfuzz ...\"");

@@ -6,6 +6,7 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 #[cfg(target_family="windows")]
 compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
 
+// TODO: maybe use `make-cmd` crate
 #[cfg(not(any(target_os = "freebsd", target_os = "dragonfly", target_os = "bitrig", target_os = "openbsd", target_os = "netbsd")))]
 const GNU_MAKE: &'static str = "make";
 #[cfg(any(target_os = "freebsd", target_os = "dragonfly", target_os = "bitrig", target_os = "openbsd", target_os = "netbsd"))]
@@ -34,6 +35,7 @@ fn main() {
         .status()
         .expect("failed to run \"make -C honggfuzz clean\"");
     assert!(status.success());
+    // TODO: maybe it's not a good idea to always clean the sources..
 
     // build honggfuzz command and hfuzz static library
     let status = Command::new(GNU_MAKE)
