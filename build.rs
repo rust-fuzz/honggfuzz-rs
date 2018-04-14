@@ -25,9 +25,8 @@ fn main() {
             "hongfuzz dependency ({}) and build command ({}) versions do not match",
             VERSION, honggfuzz_build_version);
 
-    // retrieve env variable provided by cargo
-    let out_dir = env::var("OUT_DIR").unwrap();
-    let pwd = env::var("PWD").unwrap();
+    let out_dir = env::var("OUT_DIR").unwrap(); // from cargo
+    let crate_root = env::var("CRATE_ROOT").unwrap(); //from honggfuzz
 
     // clean upsteam honggfuzz directory
     let status = Command::new(GNU_MAKE)
@@ -53,7 +52,7 @@ fn main() {
 
     // copy honggfuzz executable to honggfuzz target directory
     let status = Command::new("cp")
-        .args(&["honggfuzz/honggfuzz", &format!("{}/{}", &pwd, &honggfuzz_target)])
+        .args(&["honggfuzz/honggfuzz", &format!("{}/{}", &crate_root, &honggfuzz_target)])
         .status()
         .expect(&format!("failed to run \"cp honggfuzz/honggfuzz {}\"", &honggfuzz_target));
     assert!(status.success());

@@ -2,7 +2,7 @@ use std::fs;
 use std::env;
 use std::process::{self, Command};
 use std::os::unix::process::CommandExt;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const HONGGFUZZ_TARGET: &str = "hfuzz_target";
@@ -26,21 +26,18 @@ fn target_triple() -> String {
     triple.into()
 }
 
-fn cd_to_crate_root() {
+fn find_crate_root() -> Option<PathBuf> {
     let mut path = env::current_dir().unwrap();
 
     while !path.join("Cargo.toml").is_file() {
         // move to parent path
         path = match path.parent() {
             Some(parent) => parent.into(),
-            None => {
-                eprintln!("error: could not find `Cargo.toml` in current directory or any parent directory");
-                process::exit(1);
-            }
+            None => return None, // early return
         };
     }
 
-    env::set_current_dir(path).unwrap();
+    Some(path)
 }
 
 fn debugger_command(target: &str) -> Command {
@@ -65,7 +62,7 @@ fn hfuzz_version() {
     println!("cargo-hfuzz {}", VERSION);
 }
 
-fn hfuzz_run<T>(mut args: T, build_type: &BuildType) where T: std::iter::Iterator<Item=String> {
+fn hfuzz_run<T>(mut args: T, crate_root: &Path, build_type: &BuildType) where T: std::iter::Iterator<Item=String> {
     let target = args.next().unwrap_or_else(||{
         eprintln!("please specify the name of the target like this \"cargo hfuzz run[-debug|-no-instr] TARGET [ ARGS ... ]\"");
         process::exit(1);
@@ -75,7 +72,7 @@ fn hfuzz_run<T>(mut args: T, build_type: &BuildType) where T: std::iter::Iterato
     let honggfuzz_workspace = env::var("HFUZZ_WORKSPACE").unwrap_or_else(|_| HONGGFUZZ_WORKSPACE.into());
     let honggfuzz_input = env::var("HFUZZ_INPUT").unwrap_or_else(|_| format!("{}/{}/input", honggfuzz_workspace, target));
 
-    hfuzz_build(vec!["--bin".to_string(), target.clone()].into_iter(), build_type);
+    hfuzz_build(vec!["--bin".to_string(), target.clone()].into_iter(), crate_root, build_type);
 
     match *build_type {
         BuildType::Debug => {
@@ -128,7 +125,7 @@ fn hfuzz_run<T>(mut args: T, build_type: &BuildType) where T: std::iter::Iterato
     }
 }
 
-fn hfuzz_build<T>(args: T, build_type: &BuildType) where T: std::iter::Iterator<Item=String> {
+fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: std::iter::Iterator<Item=String> {
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
 
     let mut rustflags = "\
@@ -185,7 +182,8 @@ fn hfuzz_build<T>(args: T, build_type: &BuildType) where T: std::iter::Iterator<
         .args(args)
         .args(hfuzz_build_args) // allows user-specified arguments to be given to cargo build
         .env("RUSTFLAGS", rustflags)
-        .env("CARGO_TARGET_DIR", &honggfuzz_target); // change target_dir to not clash with regular builds
+        .env("CARGO_TARGET_DIR", &honggfuzz_target) // change target_dir to not clash with regular builds
+        .env("CRATE_ROOT", &crate_root);
     
     if *build_type != BuildType::Debug {
         command.arg("--release")
@@ -223,26 +221,30 @@ fn main() {
     }
 
     // change to crate root to have the same behavior as cargo build/run
-    cd_to_crate_root();
+    let crate_root = find_crate_root().unwrap_or_else(|| {
+        eprintln!("error: could not find `Cargo.toml` in current directory or any parent directory");
+        process::exit(1);
+    });
+    env::set_current_dir(&crate_root).unwrap();
 
     match args.next() {
         Some(ref s) if s == "build" => {
-            hfuzz_build(args, &BuildType::ReleaseInstrumented);
+            hfuzz_build(args, &crate_root, &BuildType::ReleaseInstrumented);
         }
         Some(ref s) if s == "build-no-instr" => {
-            hfuzz_build(args, &BuildType::ReleaseNotInstrumented);
+            hfuzz_build(args, &crate_root, &BuildType::ReleaseNotInstrumented);
         }
         Some(ref s) if s == "build-debug" => {
-            hfuzz_build(args, &BuildType::Debug);
+            hfuzz_build(args, &crate_root, &BuildType::Debug);
         }
         Some(ref s) if s == "run" => {
-            hfuzz_run(args, &BuildType::ReleaseInstrumented);
+            hfuzz_run(args, &crate_root, &BuildType::ReleaseInstrumented);
         }
         Some(ref s) if s == "run-no-instr" => {
-            hfuzz_run(args, &BuildType::ReleaseNotInstrumented);
+            hfuzz_run(args, &crate_root, &BuildType::ReleaseNotInstrumented);
         }
         Some(ref s) if s == "run-debug" => {
-            hfuzz_run(args, &BuildType::Debug);
+            hfuzz_run(args, &crate_root, &BuildType::Debug);
         }
         Some(ref s) if s == "clean" => {
             hfuzz_clean(args);
