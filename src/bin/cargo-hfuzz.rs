@@ -147,6 +147,7 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: s
             rustflags.push_str("\
             -C panic=abort \
             -C opt-level=3 \
+            -C target-cpu=native \
             -C debuginfo=0 \
             ");
 
