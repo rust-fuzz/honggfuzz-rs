@@ -138,14 +138,12 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: s
         BuildType::Debug => {
             rustflags.push_str("\
             --cfg fuzzing_debug \
-            -C panic=unwind \
             -C opt-level=0 \
             -C debuginfo=2 \
             ");
         }
         _ => {
             rustflags.push_str("\
-            -C panic=abort \
             -C opt-level=3 \
             -C target-cpu=native \
             -C debuginfo=0 \

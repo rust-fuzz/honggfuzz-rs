@@ -192,6 +192,7 @@
 //! 
 //! This crate was inspired by those projects!
 
+
 #[cfg(all(fuzzing, fuzzing_debug))]
 extern crate memmap;
 
@@ -234,7 +235,7 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
 }
 
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
-pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
+pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) + std::panic::RefUnwindSafe {
     let buf;
     unsafe {
         let mut buf_ptr: *const u8 = std::mem::uninitialized();
@@ -242,7 +243,14 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
         HF_ITER(&mut buf_ptr, &mut len_ptr);
         buf = ::std::slice::from_raw_parts(buf_ptr, len_ptr);
     }
-    closure(buf);
+
+    let did_panic = std::panic::catch_unwind(|| {
+        closure(buf);
+    }).is_err();
+
+    if did_panic {
+        std::process::abort();
+    }
 }
 
 #[cfg(all(fuzzing, fuzzing_debug))]
