@@ -192,6 +192,8 @@
 //! 
 //! This crate was inspired by those projects!
 
+#[cfg(all(fuzzing, not(fuzzing_debug)))]
+#[macro_use] extern crate lazy_static;
 
 #[cfg(all(fuzzing, fuzzing_debug))]
 extern crate memmap;
@@ -234,6 +236,18 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
     std::process::exit(17);
 }
 
+// Registers a panic hook that aborts the process before unwinding.
+// It is useful to abort before unwinding so that the fuzzer will then be
+// able to analyse the process stack frames to tell different bugs appart.
+#[cfg(all(fuzzing, not(fuzzing_debug)))]
+lazy_static! {
+    static ref PANIC_HOOK: () = {
+        std::panic::set_hook(Box::new(|_| {
+            std::process::abort();
+        }))
+    };
+}
+
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
 pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) + std::panic::RefUnwindSafe {
     // get buffer from honggfuzz runtime
@@ -245,12 +259,8 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) + std::panic::RefUnwindSafe {
         buf = ::std::slice::from_raw_parts(buf_ptr, len_ptr);
     }
 
-    // Registers a panic hook that aborts the process before unwinding.
-    // It is useful to abort before unwinding so that the fuzzer will then be
-    // able to analyse the process stack frames to tell different bugs appart.
-    std::panic::set_hook(Box::new(|_| {
-        std::process::abort();
-    }));
+    // sets panic hook is not already done
+    lazy_static::initialize(&PANIC_HOOK);
 
     // We still catch unwinding panics just in case the fuzzed code modifies
     // the panic hook.
