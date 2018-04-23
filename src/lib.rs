@@ -236,6 +236,7 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
 
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
 pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) + std::panic::RefUnwindSafe {
+    // get buffer from honggfuzz runtime
     let buf;
     unsafe {
         let mut buf_ptr: *const u8 = std::mem::uninitialized();
@@ -244,11 +245,24 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) + std::panic::RefUnwindSafe {
         buf = ::std::slice::from_raw_parts(buf_ptr, len_ptr);
     }
 
+    // Registers a panic hook that aborts the process before unwinding.
+    // It is useful to abort before unwinding so that the fuzzer will then be
+    // able to analyse the process stack frames to tell different bugs appart.
+    std::panic::set_hook(Box::new(|_| {
+        std::process::abort();
+    }));
+
+    // We still catch unwinding panics just in case the fuzzed code modifies
+    // the panic hook.
+    // If so, the fuzzer will be unable to tell different bugs appart and you will
+    // only be able to find one bug at a time before fixing it to then find a new one.
     let did_panic = std::panic::catch_unwind(|| {
         closure(buf);
     }).is_err();
 
     if did_panic {
+        // hopefully the custom panic hook will be called before and abort the
+        // process with instact stack frames.
         std::process::abort();
     }
 }
