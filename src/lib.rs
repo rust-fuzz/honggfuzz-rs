@@ -250,7 +250,7 @@ lazy_static! {
 
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
 pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) + std::panic::RefUnwindSafe {
-    // sets panic hook is not already done
+    // sets panic hook if not already done
     lazy_static::initialize(&PANIC_HOOK);
 
     // get buffer from honggfuzz runtime
