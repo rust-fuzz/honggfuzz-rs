@@ -250,6 +250,9 @@ lazy_static! {
 
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
 pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) + std::panic::RefUnwindSafe {
+    // sets panic hook is not already done
+    lazy_static::initialize(&PANIC_HOOK);
+
     // get buffer from honggfuzz runtime
     let buf;
     unsafe {
@@ -258,9 +261,6 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) + std::panic::RefUnwindSafe {
         HF_ITER(&mut buf_ptr, &mut len_ptr);
         buf = ::std::slice::from_raw_parts(buf_ptr, len_ptr);
     }
-
-    // sets panic hook is not already done
-    lazy_static::initialize(&PANIC_HOOK);
 
     // We still catch unwinding panics just in case the fuzzed code modifies
     // the panic hook.
@@ -272,7 +272,7 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) + std::panic::RefUnwindSafe {
 
     if did_panic {
         // hopefully the custom panic hook will be called before and abort the
-        // process with instact stack frames.
+        // process before the stack frames are unwinded.
         std::process::abort();
     }
 }
