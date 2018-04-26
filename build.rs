@@ -1,5 +1,5 @@
 use std::env;
-use std::process::Command;
+use std::process::{self, Command};
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -21,9 +21,11 @@ fn main() {
 
     // check that "cargo hfuzz" command is at the same version as this file
     let honggfuzz_build_version = env::var("CARGO_HONGGFUZZ_BUILD_VERSION").unwrap_or("unknown".to_string());
-    assert!(VERSION == honggfuzz_build_version,
-            "hongfuzz dependency ({}) and build command ({}) versions do not match",
-            VERSION, honggfuzz_build_version);
+    if VERSION != honggfuzz_build_version {
+        eprintln!("hongfuzz dependency ({}) and build command ({}) versions do not match",
+                  VERSION, honggfuzz_build_version);
+        process::exit(1);
+    }
 
     let out_dir = env::var("OUT_DIR").unwrap(); // from cargo
     let crate_root = env::var("CRATE_ROOT").unwrap(); //from honggfuzz
