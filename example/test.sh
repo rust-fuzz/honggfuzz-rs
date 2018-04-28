@@ -5,6 +5,7 @@ cargo clean
 cargo update
 
 # run commands from this directory to check that they correctly find the root crate directory
+[ -d subdirectory ] && rmdir subdirectory
 mkdir subdirectory
 
 cd subdirectory
