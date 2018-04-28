@@ -6,3 +6,5 @@ authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
 [dependencies]
 honggfuzz = {path = ".."}
 # arbitrary = "0.1"
+proc-macro2 = { git = "https://github.com/alexcrichton/proc-macro2.git" }
+

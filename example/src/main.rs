@@ -1,4 +1,5 @@
 #[macro_use] extern crate honggfuzz;
+extern crate proc_macro2;
 
 fn main() {
     // Here you can parse `std::env::args and 

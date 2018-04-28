@@ -243,7 +243,7 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
 lazy_static! {
     static ref PANIC_HOOK: () = {
         std::panic::set_hook(Box::new(|_| {
-            std::process::abort();
+            //std::process::abort();
         }))
     };
 }
@@ -273,7 +273,7 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) + std::panic::RefUnwindSafe {
     if did_panic {
         // hopefully the custom panic hook will be called before and abort the
         // process before the stack frames are unwinded.
-        std::process::abort();
+        //std::process::abort();
     }
 }
 
