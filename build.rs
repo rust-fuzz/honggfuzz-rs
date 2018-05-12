@@ -22,7 +22,7 @@ fn main() {
     // check that "cargo hfuzz" command is at the same version as this file
     let honggfuzz_build_version = env::var("CARGO_HONGGFUZZ_BUILD_VERSION").unwrap_or("unknown".to_string());
     if VERSION != honggfuzz_build_version {
-        eprintln!("hongfuzz dependency ({}) and build command ({}) versions do not match",
+        eprintln!("honggfuzz dependency ({}) and build command ({}) versions do not match",
                   VERSION, honggfuzz_build_version);
         process::exit(1);
     }
