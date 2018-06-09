@@ -229,7 +229,7 @@ extern "C" {
 /// ```
 #[cfg(not(fuzzing))]
 #[allow(unused_variables)]
-pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
+pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
     eprintln!("This executable hasn't been built with \"cargo hfuzz\".");
     eprintln!("Try executing \"cargo hfuzz build\" and check out \"hfuzz_target\" directory.");
     eprintln!("Or execute \"cargo hfuzz run TARGET\"");
@@ -249,7 +249,7 @@ lazy_static! {
 }
 
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
-pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) + std::panic::RefUnwindSafe {
+pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) + std::panic::UnwindSafe {
     // sets panic hook if not already done
     lazy_static::initialize(&PANIC_HOOK);
 
@@ -278,7 +278,7 @@ pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) + std::panic::RefUnwindSafe {
 }
 
 #[cfg(all(fuzzing, fuzzing_debug))]
-pub fn fuzz<F>(closure: F) where F: Fn(&[u8]) {
+pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
     use std::env;
     use std::fs::File;
     use memmap::MmapOptions;
