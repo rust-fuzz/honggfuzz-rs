@@ -249,7 +249,7 @@ lazy_static! {
 }
 
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
-pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) + std::panic::UnwindSafe {
+pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
     // sets panic hook if not already done
     lazy_static::initialize(&PANIC_HOOK);
 
@@ -266,9 +266,9 @@ pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) + std::panic::UnwindSafe {
     // the panic hook.
     // If so, the fuzzer will be unable to tell different bugs appart and you will
     // only be able to find one bug at a time before fixing it to then find a new one.
-    let did_panic = std::panic::catch_unwind(|| {
+    let did_panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         closure(buf);
-    }).is_err();
+    })).is_err();
 
     if did_panic {
         // hopefully the custom panic hook will be called before and abort the
