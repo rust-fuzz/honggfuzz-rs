@@ -155,6 +155,7 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: s
                 -C llvm-args=-sanitizer-coverage-level=4 \
                 -C llvm-args=-sanitizer-coverage-trace-pc-guard \
                 -C llvm-args=-sanitizer-coverage-prune-blocks=0 \
+                -C llvm-args=-sanitizer-coverage-trace-divs \
                 ");
 
                 // trace-compares doesn't work on macOS without a sanitizer
