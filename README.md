@@ -25,7 +25,7 @@ Honggfuzz is a security oriented fuzzer with powerful analysis options. Supports
 ## Compatibility
 
 * __Rust__: stable, beta, nightly
-* __OS__: GNU/Linux, macOS, FreeBSD, Android, WSL (Windows Subsystem for Linux)
+* __OS__: GNU/Linux, macOS, FreeBSD, NetBSD, Android, WSL (Windows Subsystem for Linux)
 * __Arch__: x86_64, x86, arm64-v8a, armeabi-v7a, armeabi
 * __Sanitizer__: none, address, thread, leak 
 
