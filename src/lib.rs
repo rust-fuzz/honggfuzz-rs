@@ -209,6 +209,9 @@ extern "C" {
 ///
 /// For perstistent fuzzing to work, you have to call it ad vita aeternam in an infinite loop.
 ///
+/// The closure is assumed to be unwind-safe, which might be unsafe. For more info, check the
+/// [`std::panic::UnwindSafe`] trait.
+///
 /// ```rust,should_panic
 /// # extern crate honggfuzz;
 /// # use honggfuzz::fuzz;
@@ -266,6 +269,8 @@ pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
     // the panic hook.
     // If so, the fuzzer will be unable to tell different bugs appart and you will
     // only be able to find one bug at a time before fixing it to then find a new one.
+    // The closure is assumed to be unwind-safe, which might be unsafe. For more info, check the
+    // [`std::panic::UnwindSafe`] trait.
     let did_panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         closure(buf);
     })).is_err();
