@@ -29,6 +29,21 @@ Honggfuzz is a security oriented fuzzer with powerful analysis options. Supports
 * __Arch__: x86_64, x86, arm64-v8a, armeabi-v7a, armeabi
 * __Sanitizer__: none, address, thread, leak 
 
+## Dependencies
+
+### Linux
+
+* C compiler: `cc`
+* GNU Make: `make`
+* GNU Binutils development files for the BFD library: `libbfd.h`
+* libunwind development files: `libunwind.h`
+
+For example on Debian and its derivatives:
+
+```sh
+sudo apt install build-essential binutils-dev libunwind-dev
+```
+
 ## How to use this crate
 
 Install honggfuzz commands to build with instrumentation and fuzz
