@@ -1,6 +1,9 @@
 #!/bin/sh -ve
 export RUST_BACKTRACE=full
 
+# HACK: temporary fix, see https://github.com/rust-lang/rust/issues/53945#issuecomment-426824324
+export RUSTFLAGS="-Clink-arg=-fuse-ld=gold"
+
 cargo clean
 cargo update
 
