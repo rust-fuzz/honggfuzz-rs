@@ -37,11 +37,12 @@ Honggfuzz is a security oriented fuzzer with powerful analysis options. Supports
 * GNU Make: `make`
 * GNU Binutils development files for the BFD library: `libbfd.h`
 * libunwind development files: `libunwind.h`
+* Blocks runtime library (when compiling with clang)
 
 For example on Debian and its derivatives:
 
 ```sh
-sudo apt install build-essential binutils-dev libunwind-dev
+sudo apt install build-essential binutils-dev libunwind-dev libblocksruntime-dev
 ```
 
 ## How to use this crate
