@@ -2,13 +2,7 @@
 export RUST_BACKTRACE=full
 
 # HACK: temporary fix, see https://github.com/rust-lang/rust/issues/53945#issuecomment-426824324
-set +e
-which ld.gold # test if we are on a system with the GNU Gold linker installed
-status=$?
-set -e
-if [ $status -eq 0 ] ;then # if so, use it
-  export RUSTFLAGS="-Clink-arg=-fuse-ld=gold"
-fi
+export RUSTFLAGS="-Clink-arg=-fuse-ld=gold"
 
 cargo clean
 cargo update
