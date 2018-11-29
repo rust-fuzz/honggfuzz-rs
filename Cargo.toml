@@ -24,6 +24,9 @@ exclude = [
 travis-ci = { repository = "rust-fuzz/honggfuzz-rs", branch = "master" }
 maintenance = { status = "actively-developed" }
 
+[dependencies]
+arbitrary = "0.2"
+
 [dev-dependencies]
 rand = "0.5"
 

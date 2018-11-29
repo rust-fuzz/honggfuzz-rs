@@ -207,6 +207,9 @@
 //! 
 //! This crate was inspired by those projects!
 
+/// Re-export of arbitrary crate used to generate structured inputs
+pub extern crate arbitrary;
+
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
 #[macro_use] extern crate lazy_static;
 
@@ -360,14 +363,17 @@ macro_rules! fuzz {
     (|$buf:ident: &[u8]| $body:block) => {
         honggfuzz::fuzz(|$buf| $body);
     };
-    (|$buf:ident: $dty: ty| $body:block) => {
+    (|$buf:ident: $dty:ty| $body:block) => {
         honggfuzz::fuzz(|$buf| {
             let $buf: $dty = {
-                use arbitrary::{Arbitrary, RingBuffer};
-                if let Ok(d) = RingBuffer::new($buf, $buf.len()).and_then(|mut b|{
-                        Arbitrary::arbitrary(&mut b).map_err(|_| "")
-                    }) {
-                    d
+                use $crate::arbitrary::{Arbitrary, RingBuffer};
+
+                if let Ok(mut buf) = RingBuffer::new($buf, $buf.len()) {
+                    if let Ok(buf) = Arbitrary::arbitrary(&mut buf) {
+                        buf
+                    } else {
+                        return
+                    }
                 } else {
                     return
                 }
