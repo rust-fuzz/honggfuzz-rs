@@ -208,13 +208,7 @@
 //! This crate was inspired by those projects!
 
 /// Re-export of arbitrary crate used to generate structured inputs
-pub extern crate arbitrary;
-
-#[cfg(all(fuzzing, not(fuzzing_debug)))]
-#[macro_use] extern crate lazy_static;
-
-#[cfg(all(fuzzing, fuzzing_debug))]
-extern crate memmap;
+pub use arbitrary;
 
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
 extern "C" {
@@ -261,7 +255,7 @@ pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
 // It is useful to abort before unwinding so that the fuzzer will then be
 // able to analyse the process stack frames to tell different bugs appart.
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
-lazy_static! {
+lazy_static::lazy_static! {
     static ref PANIC_HOOK: () = {
         std::panic::set_hook(Box::new(|_| {
             std::process::abort();
