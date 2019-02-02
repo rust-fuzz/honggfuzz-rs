@@ -2,6 +2,7 @@
 name = "example"
 version = "0.0.0"
 authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
+edition = "2018"
 
 [dependencies]
 honggfuzz = {path = ".."}
