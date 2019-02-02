@@ -243,54 +243,48 @@ extern "C" {
 /// # }
 /// ```
 #[cfg(not(fuzzing))]
-#[allow(unused_variables)]
-pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
+#[allow(unused_variables,unused_mut)]
+pub fn fuzz<F>(mut closure: F) where F: FnMut(&[u8]) {
     eprintln!("This executable hasn't been built with \"cargo hfuzz\".");
     eprintln!("Try executing \"cargo hfuzz build\" and check out \"hfuzz_target\" directory.");
     eprintln!("Or execute \"cargo hfuzz run TARGET\"");
     std::process::exit(17);
 }
 
-// Registers a panic hook that aborts the process before unwinding.
-// It is useful to abort before unwinding so that the fuzzer will then be
-// able to analyse the process stack frames to tell different bugs appart.
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
-lazy_static::lazy_static! {
-    static ref PANIC_HOOK: () = {
-        std::panic::set_hook(Box::new(|_| {
-            std::process::abort();
-        }))
-    };
-}
-
-#[cfg(all(fuzzing, not(fuzzing_debug)))]
-pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
-    // sets panic hook if not already done
-    lazy_static::initialize(&PANIC_HOOK);
-
-    // get buffer from honggfuzz runtime
-    let buf;
-    unsafe {
-        let mut buf_ptr: *const u8 = std::mem::uninitialized();
-        let mut len_ptr: usize = std::mem::uninitialized();
-        HF_ITER(&mut buf_ptr, &mut len_ptr);
-        buf = ::std::slice::from_raw_parts(buf_ptr, len_ptr);
-    }
-
-    // We still catch unwinding panics just in case the fuzzed code modifies
-    // the panic hook.
-    // If so, the fuzzer will be unable to tell different bugs appart and you will
-    // only be able to find one bug at a time before fixing it to then find a new one.
-    // The closure is assumed to be unwind-safe, which might be unsafe. For more info, check the
-    // [`std::panic::UnwindSafe`] trait.
-    let did_panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        closure(buf);
-    })).is_err();
-
-    if did_panic {
-        // hopefully the custom panic hook will be called before and abort the
-        // process before the stack frames are unwinded.
+pub fn fuzz<F>(mut closure: F) where F: FnMut(&[u8]) {
+    // Registers a panic hook that aborts the process before unwinding.
+    // It is useful to abort before unwinding so that the fuzzer will then be
+    // able to analyse the process stack frames to tell different bugs appart.
+    std::panic::set_hook(Box::new(|_| {
         std::process::abort();
+    }));
+
+    // infinite fuzzing loop
+    loop {
+        // get buffer from honggfuzz runtime
+        let buf = unsafe {
+            let mut buf_ptr: *const u8 = std::mem::uninitialized();
+            let mut len_ptr: usize = std::mem::uninitialized();
+            HF_ITER(&mut buf_ptr, &mut len_ptr);
+            ::std::slice::from_raw_parts(buf_ptr, len_ptr)
+        };
+
+        // We still catch unwinding panics just in case the fuzzed code modifies
+        // the panic hook.
+        // If so, the fuzzer will be unable to tell different bugs appart and you will
+        // only be able to find one bug at a time before fixing it to then find a new one.
+        // The closure is assumed to be unwind-safe, which might be unsafe. For more info, check the
+        // [`std::panic::UnwindSafe`] trait.
+        let did_panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            closure(buf);
+        })).is_err();
+
+        if did_panic {
+            // hopefully the custom panic hook will be called before and abort the
+            // process before the stack frames are unwinded.
+            std::process::abort();
+        }
     }
 }
 
