@@ -28,10 +28,10 @@ maintenance = { status = "actively-developed" }
 arbitrary = "0.2"
 
 [dev-dependencies]
-rand = "0.5"
+rand = "0.6"
 
 [target.'cfg(fuzzing)'.dependencies]
-lazy_static = "1.1"
+lazy_static = "1.2"
 
 [target.'cfg(fuzzing_debug)'.dependencies]
 memmap = "0.7"
