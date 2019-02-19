@@ -3,5 +3,13 @@ name = "example"
 version = "0.0.0"
 authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
 
+[[bin]]
+name = "example"
+path = "src/main.rs"
+
+[[bin]]
+name = "arbitrary-example"
+path = "src/arbitrary_main.rs"
+
 [dependencies]
 honggfuzz = {path = ".."}
