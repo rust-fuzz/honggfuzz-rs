@@ -7,7 +7,7 @@
 [docs-img]:     https://docs.rs/honggfuzz/badge.svg
 [docs]:         https://docs.rs/honggfuzz
 
-Fuzz your Rust code with Google-developped Honggfuzz !
+Fuzz your Rust code with Google-developed Honggfuzz !
 
 ## [Documentation](https://docs.rs/honggfuzz)
 
