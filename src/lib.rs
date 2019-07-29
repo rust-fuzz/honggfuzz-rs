@@ -271,16 +271,20 @@ lazy_static! {
 
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
 pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
+    use std::mem::MaybeUninit;
+
     // sets panic hook if not already done
     lazy_static::initialize(&PANIC_HOOK);
 
     // get buffer from honggfuzz runtime
     let buf;
+
+    let mut buf_ptr = MaybeUninit::<*const u8>::uninit();
+    let mut len_ptr = MaybeUninit::<usize>::uninit();
+
     unsafe {
-        let mut buf_ptr: *const u8 = std::mem::uninitialized();
-        let mut len_ptr: usize = std::mem::uninitialized();
-        HF_ITER(&mut buf_ptr, &mut len_ptr);
-        buf = ::std::slice::from_raw_parts(buf_ptr, len_ptr);
+        HF_ITER(buf_ptr.as_mut_ptr(), len_ptr.as_mut_ptr());
+        buf = ::std::slice::from_raw_parts(buf_ptr.assume_init(), len_ptr.assume_init());
     }
 
     // We still catch unwinding panics just in case the fuzzed code modifies
