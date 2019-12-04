@@ -15,6 +15,7 @@ compile_error!("honggfuzz-rs does not currently support Windows but works well u
 enum BuildType {
     ReleaseInstrumented,
     ReleaseNotInstrumented,
+    ProfileWithGrcov,
     Debug
 }
 
@@ -146,7 +147,8 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: s
     -C debug-assertions \
     -C overflow_checks \
     ".to_string();
-
+    
+    let mut cargo_incremental = "1";
     match *build_type {
         BuildType::Debug => {
             rustflags.push_str("\
@@ -155,6 +157,22 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: s
             -C debuginfo=2 \
             ");
         }
+
+        BuildType::ProfileWithGrcov => {
+            rustflags.push_str("\
+            --cfg fuzzing_debug \
+            -Zprofile \
+            -Zno-landing-pads \
+            -C opt-level=0 \
+            -C debuginfo=2 \
+            -Ccodegen-units=1 \
+            -Cinline-threshold=0 \
+            -Clink-dead-code \
+            ");
+            //-Coverflow-checks=off \
+            cargo_incremental = "0";
+        }
+
         _ => {
             rustflags.push_str("\
             -C opt-level=3 \
@@ -200,6 +218,7 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: s
         .args(args)
         .args(hfuzz_build_args) // allows user-specified arguments to be given to cargo build
         .env("RUSTFLAGS", rustflags)
+        .env("CARGO_INCREMENTAL", cargo_incremental)
         .env("CARGO_TARGET_DIR", &honggfuzz_target) // change target_dir to not clash with regular builds
         .env("CRATE_ROOT", &crate_root);
     
@@ -255,12 +274,16 @@ fn main() {
         Some(ref s) if s == "build-debug" => {
             hfuzz_build(args, &crate_root, &BuildType::Debug);
         }
+        Some(ref s) if s == "build-grcov" => {
+            hfuzz_build(args, &crate_root, &BuildType::ProfileWithGrcov);
+        }
         Some(ref s) if s == "run" => {
             hfuzz_run(args, &crate_root, &BuildType::ReleaseInstrumented);
         }
         Some(ref s) if s == "run-no-instr" => {
             hfuzz_run(args, &crate_root, &BuildType::ReleaseNotInstrumented);
         }
+
         Some(ref s) if s == "run-debug" => {
             hfuzz_run(args, &crate_root, &BuildType::Debug);
         }
@@ -271,7 +294,7 @@ fn main() {
             hfuzz_version();
         }
         _ => {
-            eprintln!("possible commands are: run, run-no-instr, run-debug, build, build-no-instr, build-debug, clean, version");
+            eprintln!("possible commands are: run, run-no-instr, run-debug, build, build-no-instr, build-grcov, build-debug, clean, version");
             process::exit(1);
         }
     }
