@@ -222,7 +222,7 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: s
         .env("CARGO_TARGET_DIR", &honggfuzz_target) // change target_dir to not clash with regular builds
         .env("CRATE_ROOT", &crate_root);
     
-    if *build_type != BuildType::Debug {
+    if *build_type != BuildType::Debug && *build_type != BuildType::ProfileWithGrcov {
         command.arg("--release")
             .env("CARGO_HONGGFUZZ_BUILD_VERSION", VERSION)   // used by build.rs to check that versions are in sync
             .env("CARGO_HONGGFUZZ_TARGET_DIR", &honggfuzz_target); // env variable to be read by build.rs script 
