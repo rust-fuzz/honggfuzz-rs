@@ -40,9 +40,9 @@ fn main() {
 
     // build honggfuzz command and hfuzz static library
     let status = Command::new(GNU_MAKE)
-        .args(&["-C", "honggfuzz", "honggfuzz", "libhfuzz/libhfuzz.a"])
+        .args(&["-C", "honggfuzz", "honggfuzz", "libhfuzz/libhfuzz.a", "libhfcommon/libhfcommon.a"])
         .status()
-        .expect("failed to run \"make -C honggfuzz hongfuzz libhfuzz/libhfuzz.a\"");
+        .expect("failed to run \"make -C honggfuzz hongfuzz libhfuzz/libhfuzz.a libhfcommon/libhfcommon.a\"");
     assert!(status.success());
 
     // copy hfuzz static library to output directory
@@ -50,6 +50,11 @@ fn main() {
         .args(&["honggfuzz/libhfuzz/libhfuzz.a", &out_dir])
         .status()
         .expect(&format!("failed to run \"cp honggfuzz/libhfuzz/libhfuzz.a {}\"", &out_dir));
+    assert!(status.success());
+    let status = Command::new("cp")
+        .args(&["honggfuzz/libhfcommon/libhfcommon.a", &out_dir])
+        .status()
+        .expect(&format!("failed to run \"cp honggfuzz/libhfcommon/libhfcommon.a {}\"", &out_dir));
     assert!(status.success());
 
     // copy honggfuzz executable to honggfuzz target directory
@@ -61,5 +66,6 @@ fn main() {
 
     // tell cargo how to link final executable to hfuzz static library
     println!("cargo:rustc-link-lib=static={}", "hfuzz");
+    println!("cargo:rustc-link-lib=static={}", "hfcommon");
     println!("cargo:rustc-link-search=native={}", &out_dir);
 }
