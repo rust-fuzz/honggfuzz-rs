@@ -198,7 +198,7 @@ When building with `cargo hfuzz`, the argument `--cfg fuzzing` is passed to `rus
 
 ```rust
 #[cfg(fuzzing)]
-let mut rng = rand::StdRng::from_seed(&[0]);
+let mut rng = rand_chacha::ChaCha8Rng::from_seed(&[0]);
 #[cfg(not(fuzzing))]
 let mut rng = rand::thread_rng();
 ```
