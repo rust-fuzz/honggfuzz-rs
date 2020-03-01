@@ -6,7 +6,7 @@ rust:
 os:
   - linux
   - osx
-matrix:
+jobs:
   allow_failures:
     - os: osx
   exclude:
@@ -24,7 +24,6 @@ addons:
     packages:
       - binutils-dev
       - libunwind8-dev
-sudo: required
 notifications:
   email:
     recipients:
