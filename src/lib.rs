@@ -370,14 +370,11 @@ macro_rules! fuzz {
     (|$buf:ident: $dty:ty| $body:block) => {
         honggfuzz::fuzz(|$buf| {
             let $buf: $dty = {
-                use $crate::arbitrary::{Arbitrary, RingBuffer};
+                use $crate::arbitrary::{Arbitrary, Unstructured};
 
-                if let Ok(mut buf) = RingBuffer::new($buf, $buf.len()) {
-                    if let Ok(buf) = Arbitrary::arbitrary(&mut buf) {
-                        buf
-                    } else {
-                        return
-                    }
+                let mut buf = Unstructured::new($buf); 
+                if let Ok(buf) = Arbitrary::arbitrary(&mut buf) {
+                    buf
                 } else {
                     return
                 }
