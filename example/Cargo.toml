@@ -2,6 +2,7 @@
 name = "example"
 version = "0.0.0"
 authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
+default-run = "example"
 
 [[bin]]
 name = "example"
