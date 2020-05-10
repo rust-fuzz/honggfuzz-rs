@@ -1,6 +1,6 @@
 [package]
 name = "honggfuzz"
-version = "0.5.48"
+version = "0.5.49"
 authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
 license = "MIT/Apache-2.0/Unlicense/WTFPL"
 repository = "https://github.com/rust-fuzz/honggfuzz-rs"
