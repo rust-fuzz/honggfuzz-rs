@@ -1,5 +1,3 @@
-#[macro_use] extern crate honggfuzz;
-
 fn main() {
     // Here you can parse `std::env::args and 
     // setup / initialize your project
@@ -17,7 +15,7 @@ fn main() {
         // For performance, it is recommended that you use the native type
         // `&[u8]` when possible.
         // Here, this slice will contain a "random" quantity of "random" data.
-        fuzz!(|data: &[u8]| {
+        honggfuzz::fuzz!(|data: &[u8]| {
             // Try to access the global state across the unwind boundary
             some_global_state += 1;
 

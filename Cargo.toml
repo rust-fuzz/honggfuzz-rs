@@ -2,6 +2,7 @@
 name = "honggfuzz"
 version = "0.5.49"
 authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
+edition = "2018"
 license = "MIT/Apache-2.0/Unlicense/WTFPL"
 repository = "https://github.com/rust-fuzz/honggfuzz-rs"
 documentation = "https://docs.rs/honggfuzz"

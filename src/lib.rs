@@ -48,8 +48,6 @@
 //! Create a target to fuzz
 //! 
 //! ```rust,should_panic
-//! #[macro_use] extern crate honggfuzz;
-//! 
 //! fn main() {
 //!     // Here you can parse `std::env::args and 
 //!     // setup / initialize your project
@@ -62,7 +60,7 @@
 //!         // For performance reasons, it is recommended that you use the native type
 //!         // `&[u8]` when possible.
 //!         // Here, this slice will contain a "random" quantity of "random" data.
-//!         fuzz!(|data: &[u8]| {
+//!         honggfuzz::fuzz!(|data: &[u8]| {
 //!             if data.len() != 6 {return}
 //!             if data[0] != b'q' {return}
 //!             if data[1] != b'w' {return}
@@ -180,8 +178,6 @@
 //! When building with `cargo hfuzz`, the argument `--cfg fuzzing` is passed to `rustc` to allow you to condition the compilation of thoses adaptations thanks to the `cfg` macro like so:
 //! 
 //! ```rust
-//! # extern crate rand;
-//! # extern crate rand_chacha;
 //! # use rand::{Rng, SeedableRng};
 //! # fn main() {
 //! #[cfg(fuzzing)]
@@ -212,12 +208,6 @@
 pub extern crate arbitrary;
 
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
-#[macro_use] extern crate lazy_static;
-
-#[cfg(all(fuzzing, fuzzing_debug))]
-extern crate memmap;
-
-#[cfg(all(fuzzing, not(fuzzing_debug)))]
 extern "C" {
     fn HF_ITER(buf_ptr: *mut *const u8, len_ptr: *mut usize );
 }
@@ -232,11 +222,10 @@ extern "C" {
 /// [`std::panic::UnwindSafe`] trait.
 ///
 /// ```rust,should_panic
-/// # extern crate honggfuzz;
 /// # use honggfuzz::fuzz;
 /// # fn main() {
 /// loop {
-///     fuzz(|data|{
+///     honggfuzz::fuzz(|data|{
 ///         if data.len() != 6 {return}
 ///         if data[0] != b'q' {return}
 ///         if data[1] != b'w' {return}
@@ -262,7 +251,7 @@ pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
 // It is useful to abort before unwinding so that the fuzzer will then be
 // able to analyse the process stack frames to tell different bugs appart.
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
-lazy_static! {
+lazy_static::lazy_static! {
     static ref PANIC_HOOK: () = {
         std::panic::set_hook(Box::new(|_| {
             std::process::abort();
@@ -343,10 +332,9 @@ pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
 /// For perstistent fuzzing to work, you have to call it ad vita aeternam in an infinite loop.
 ///
 /// ```rust,should_panic
-/// # #[macro_use] extern crate honggfuzz;
 /// # fn main() {
 /// loop {
-///     fuzz!(|data: &[u8]| {
+///     honggfuzz::fuzz!(|data: &[u8]| {
 ///         if data.len() != 6 {return}
 ///         if data[0] != b'q' {return}
 ///         if data[1] != b'w' {return}

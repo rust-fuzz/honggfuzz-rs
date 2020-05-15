@@ -64,8 +64,6 @@ honggfuzz = "0.5"
 Create a target to fuzz
 
 ```rust
-#[macro_use] extern crate honggfuzz;
-
 fn main() {
     // Here you can parse `std::env::args and 
     // setup / initialize your project
@@ -78,7 +76,7 @@ fn main() {
         // For performance reasons, it is recommended that you use the native type
         // `&[u8]` when possible.
         // Here, this slice will contain a "random" quantity of "random" data.
-        fuzz!(|data: &[u8]| {
+        honggfuzz::fuzz!(|data: &[u8]| {
             if data.len() != 6 {return}
             if data[0] != b'q' {return}
             if data[1] != b'w' {return}
