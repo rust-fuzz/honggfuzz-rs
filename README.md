@@ -42,7 +42,7 @@ Honggfuzz is a security oriented fuzzer with powerful analysis options. Supports
 For example on Debian and its derivatives:
 
 ```sh
-sudo apt install build-essential binutils-dev libunwind-dev libblocksruntime-dev
+sudo apt install build-essential binutils-dev libunwind-dev libblocksruntime-dev liblzma-dev
 ```
 
 ## How to use this crate
@@ -104,7 +104,7 @@ Once you got a crash, replay it easily in a debug environment
 
 ```sh
 # builds the target in debug mode and replays automatically the crash in rust-lldb
-cargo hfuzz run-debug example fuzzing_workspace/*.fuzz
+cargo hfuzz run-debug example hfuzz_workspace/*/*.fuzz
 ```
 
 You can also build and run your project without compile-time software instrumentation (LLVM's SanCov passes)
