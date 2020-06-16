@@ -27,7 +27,7 @@ Honggfuzz is a security oriented fuzzer with powerful analysis options. Supports
 * __Rust__: stable, beta, nightly
 * __OS__: GNU/Linux, macOS, FreeBSD, NetBSD, Android, WSL (Windows Subsystem for Linux)
 * __Arch__: x86_64, x86, arm64-v8a, armeabi-v7a, armeabi
-* __Sanitizer__: none, address, thread, leak 
+* __Sanitizer__: none, address, thread, leak
 
 ## Dependencies
 
@@ -42,7 +42,7 @@ Honggfuzz is a security oriented fuzzer with powerful analysis options. Supports
 For example on Debian and its derivatives:
 
 ```sh
-sudo apt install build-essential binutils-dev libunwind-dev libblocksruntime-dev
+sudo apt install build-essential binutils-dev libunwind-dev libblocksruntime-dev liblzma-dev
 ```
 
 ## How to use this crate
@@ -67,7 +67,7 @@ Create a target to fuzz
 #[macro_use] extern crate honggfuzz;
 
 fn main() {
-    // Here you can parse `std::env::args and 
+    // Here you can parse `std::env::args and
     // setup / initialize your project
 
     // You have full control over the loop but
@@ -104,7 +104,7 @@ Once you got a crash, replay it easily in a debug environment
 
 ```sh
 # builds the target in debug mode and replays automatically the crash in rust-lldb
-cargo hfuzz run-debug example fuzzing_workspace/*.fuzz
+cargo hfuzz run-debug example hfuzz_workspace/*/*.fuzz
 ```
 
 You can also build and run your project without compile-time software instrumentation (LLVM's SanCov passes)
@@ -120,7 +120,7 @@ Clean
 
 ```sh
 # a wrapper on "cargo clean" which cleans the fuzzing_target directory
-cargo hfuzz clean 
+cargo hfuzz clean
 ```
 
 Version
@@ -183,15 +183,16 @@ Honggfuzz input files (also called "corpus"), defaults to `$HFUZZ_WORKSPACE/{TAR
 Sometimes, it is necessary to make some specific adaptation to your code to yield a better fuzzing efficiency.
 
 For instance:
-- Make you software behavior as much as possible deterministic on the fuzzing input
-  - [PRNG](https://en.wikipedia.org/wiki/Pseudorandom_number_generator)s must be seeded with a constant or the fuzzer input
-  - Behavior shouldn't change based on the computer's clock.
-  - Avoid potential undeterministic behavior from racing threads.
-  - ...
-- Never ever call `std::process::exit()`.
-- Disable logging and other unnecessary functionnalities.
-- Try to avoid modifying global state when possible.
-- Do not set up your own panic hook when run with `cfg(fuzzing)`
+
+* Make you software behavior as much as possible deterministic on the fuzzing input
+  * [PRNG](https://en.wikipedia.org/wiki/Pseudorandom_number_generator)s must be seeded with a constant or the fuzzer input
+  * Behavior shouldn't change based on the computer's clock.
+  * Avoid potential undeterministic behavior from racing threads.
+  * ...
+* Never ever call `std::process::exit()`.
+* Disable logging and other unnecessary functionnalities.
+* Try to avoid modifying global state when possible.
+* Do not set up your own panic hook when run with `cfg(fuzzing)`
 
 
 When building with `cargo hfuzz`, the argument `--cfg fuzzing` is passed to `rustc` to allow you to condition the compilation of thoses adaptations thanks to the `cfg` macro like so:
@@ -208,14 +209,15 @@ Also, when building in debug mode, the `fuzzing_debug` argument is added in addi
 For more information about conditional compilation, please see the [reference](https://doc.rust-lang.org/reference/attributes.html#conditional-compilation).
 
 ## Relevant documentation about honggfuzz
+
 * [USAGE](https://github.com/google/honggfuzz/blob/master/docs/USAGE.md)
 * [FeedbackDrivenFuzzing](https://github.com/google/honggfuzz/blob/master/docs/FeedbackDrivenFuzzing.md)
 * [PersistentFuzzing](https://github.com/google/honggfuzz/blob/master/docs/PersistentFuzzing.md)
 
 ## About Rust fuzzing
- 
-There is other projects providing Rust fuzzing support at [github.com/rust-fuzz](https://github.com/rust-fuzz). 
- 
+
+There is other projects providing Rust fuzzing support at [github.com/rust-fuzz](https://github.com/rust-fuzz).
+
 You'll find support for [AFL](https://github.com/rust-fuzz/afl.rs) and LLVM's [LibFuzzer](https://github.com/rust-fuzz/cargo-fuzz) and there is also a [trophy case](https://github.com/rust-fuzz/trophy-case) ;-) .
 
 This crate was inspired by those projects!
