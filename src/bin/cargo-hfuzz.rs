@@ -162,7 +162,7 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: s
             rustflags.push_str("\
             --cfg fuzzing_debug \
             -Zprofile \
-            -Zno-landing-pads \
+            -Cpanic=abort \
             -C opt-level=0 \
             -C debuginfo=2 \
             -Ccodegen-units=1 \
