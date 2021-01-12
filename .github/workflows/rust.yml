@@ -10,14 +10,57 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  ubuntu-nightly:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: nightly
+        override: true
     - name: Install Deps
       run: sudo apt-get install --no-install-recommends binutils-dev libunwind8-dev
+    - name: Test
+      run: ./test.sh
+  
+  ubuntu-beta:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: beta
+        override: true
+    - name: Install Deps
+      run: sudo apt-get install --no-install-recommends binutils-dev libunwind8-dev
+    - name: Test
+      run: ./test.sh
+      
+  ubuntu-stable:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+    - name: Install Deps
+      run: sudo apt-get install --no-install-recommends binutils-dev libunwind8-dev
+    - name: Test
+      run: ./test.sh
+        
+  macos-nightly:
+    runs-on: macos-11.0
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: nightly
+        override: true
     - name: Test
       run: ./test.sh
 
