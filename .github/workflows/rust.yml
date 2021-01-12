@@ -23,8 +23,6 @@ jobs:
       run: sudo apt-get install --no-install-recommends binutils-dev libunwind8-dev
     - name: Test
       run: ./test.sh
-      env:
-        RUST_BACKTRACE: full  
   
   ubuntu-beta:
     runs-on: ubuntu-latest
@@ -39,8 +37,6 @@ jobs:
       run: sudo apt-get install --no-install-recommends binutils-dev libunwind8-dev
     - name: Test
       run: ./test.sh
-      env:
-        RUST_BACKTRACE: full  
       
   ubuntu-stable:
     runs-on: ubuntu-latest
@@ -55,20 +51,16 @@ jobs:
       run: sudo apt-get install --no-install-recommends binutils-dev libunwind8-dev
     - name: Test
       run: ./test.sh
-      env:
-        RUST_BACKTRACE: full  
         
-  macos-nightly:
-    runs-on: macos-10.15 # macos-11 is not yet supported by upstream honggfuzz
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: nightly
-        override: true
-    - name: Test
-      run: ./test.sh
-      env:
-        RUST_BACKTRACE: full  
+#  macos-nightly:
+#    runs-on: macos-10.15 # macos-11 is not yet supported by upstream honggfuzz
+#    steps:
+#    - uses: actions/checkout@v2
+#    - uses: actions-rs/toolchain@v1
+#      with:
+#        profile: minimal
+#        toolchain: nightly
+#        override: true
+#    - name: Test
+#      run: ./test.sh
 
