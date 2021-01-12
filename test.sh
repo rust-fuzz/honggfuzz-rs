@@ -19,10 +19,10 @@ RUSTFLAGS="" ./test.sh
 # run test.sh with sanitizers only on nightly
 version=`rustc --version`
 if [ -z "${version##*nightly*}" ] ;then
-	RUSTFLAGS="-Z sanitizer=address" ./test.sh
 	RUSTFLAGS="-Z sanitizer=thread" ./test.sh
-	if [ "`uname`" = "Linux" ] ;then # the leak sanitizer is only available on Linux
-		RUSTFLAGS="-Z sanitizer=leak" ./test.sh
+	if [ "`uname`" = "Linux" ] ;then
+		RUSTFLAGS="-Z sanitizer=address" ./test.sh # not working on macos
+		RUSTFLAGS="-Z sanitizer=leak" ./test.sh # the leak sanitizer is only available on Linux
 	fi
 	# RUSTFLAGS="-Z sanitizer=memory" ./test.sh # not working, see: https://github.com/rust-lang/rust/issues/39610
 fi
