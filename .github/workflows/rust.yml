@@ -16,6 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Install Deps
+      run: sudo apt-get install --no-install-recommends binutils-dev libunwind8-dev
     - name: Test
       run: ./test.sh
 
