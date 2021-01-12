@@ -36,7 +36,7 @@ cd ..
 crash_path="$(ls $workspace/*.fuzz | head -n1)"
 
 # verify that the fuzzing process found the crash
-test $(cat "$crash_path") = "qwerty"
+test $(cat "$crash_path") = "hey"
 
 # build example in debug mode (and without sanitizers)
 cd subdirectory

@@ -63,13 +63,10 @@
 //!         // `&[u8]` when possible.
 //!         // Here, this slice will contain a "random" quantity of "random" data.
 //!         fuzz!(|data: &[u8]| {
-//!             if data.len() != 6 {return}
-//!             if data[0] != b'q' {return}
-//!             if data[1] != b'w' {return}
-//!             if data[2] != b'e' {return}
-//!             if data[3] != b'r' {return}
-//!             if data[4] != b't' {return}
-//!             if data[5] != b'y' {return}
+//!             if data.len() != 3 {return}
+//!             if data[0] != b'h' {return}
+//!             if data[1] != b'e' {return}
+//!             if data[2] != b'y' {return}
 //!             panic!("BOOM")
 //!         });
 //!     }
@@ -237,13 +234,10 @@ extern "C" {
 /// # fn main() {
 /// loop {
 ///     fuzz(|data|{
-///         if data.len() != 6 {return}
-///         if data[0] != b'q' {return}
-///         if data[1] != b'w' {return}
-///         if data[2] != b'e' {return}
-///         if data[3] != b'r' {return}
-///         if data[4] != b't' {return}
-///         if data[5] != b'y' {return}
+///         if data.len() != 3 {return}
+///         if data[0] != b'h' {return}
+///         if data[1] != b'e' {return}
+///         if data[2] != b'y' {return}
 ///         panic!("BOOM")
 ///     });
 /// }
@@ -347,13 +341,10 @@ pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
 /// # fn main() {
 /// loop {
 ///     fuzz!(|data: &[u8]| {
-///         if data.len() != 6 {return}
-///         if data[0] != b'q' {return}
-///         if data[1] != b'w' {return}
-///         if data[2] != b'e' {return}
-///         if data[3] != b'r' {return}
-///         if data[4] != b't' {return}
-///         if data[5] != b'y' {return}
+///         if data.len() != 3 {return}
+///         if data[0] != b'h' {return}
+///         if data[1] != b'e' {return}
+///         if data[2] != b'y' {return}
 ///         panic!("BOOM")
 ///     });
 /// }
