@@ -23,6 +23,8 @@ jobs:
       run: sudo apt-get install --no-install-recommends binutils-dev libunwind8-dev
     - name: Test
       run: ./test.sh
+      env:
+        RUST_BACKTRACE: full  
   
   ubuntu-beta:
     runs-on: ubuntu-latest
@@ -37,6 +39,8 @@ jobs:
       run: sudo apt-get install --no-install-recommends binutils-dev libunwind8-dev
     - name: Test
       run: ./test.sh
+      env:
+        RUST_BACKTRACE: full  
       
   ubuntu-stable:
     runs-on: ubuntu-latest
@@ -51,6 +55,8 @@ jobs:
       run: sudo apt-get install --no-install-recommends binutils-dev libunwind8-dev
     - name: Test
       run: ./test.sh
+      env:
+        RUST_BACKTRACE: full  
         
   macos-nightly:
     runs-on: macos-11.0
@@ -63,4 +69,6 @@ jobs:
         override: true
     - name: Test
       run: ./test.sh
+      env:
+        RUST_BACKTRACE: full  
 
