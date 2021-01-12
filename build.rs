@@ -1,16 +1,16 @@
 use std::env;
 use std::process::{self, Command};
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(target_family="windows")]
 compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
 
 // TODO: maybe use `make-cmd` crate
 #[cfg(not(any(target_os = "freebsd", target_os = "dragonfly", target_os = "bitrig", target_os = "openbsd", target_os = "netbsd")))]
-const GNU_MAKE: &'static str = "make";
+const GNU_MAKE: &str = "make";
 #[cfg(any(target_os = "freebsd", target_os = "dragonfly", target_os = "bitrig", target_os = "openbsd", target_os = "netbsd"))]
-const GNU_MAKE: &'static str = "gmake";
+const GNU_MAKE: &str = "gmake";
 
 fn main() {
     // Only build honggfuzz binaries if we are in the process of building an instrumentized binary

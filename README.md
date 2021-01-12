@@ -64,7 +64,7 @@ honggfuzz = "0.5"
 Create a target to fuzz
 
 ```rust
-#[macro_use] extern crate honggfuzz;
+use honggfuzz::fuzz;
 
 fn main() {
     // Here you can parse `std::env::args and

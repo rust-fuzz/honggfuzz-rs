@@ -23,7 +23,7 @@ enum BuildType {
 fn target_triple() -> String {
     let output = Command::new("rustc").args(&["-v", "-V"]).output().unwrap();
     let stdout = String::from_utf8(output.stdout).unwrap();
-    let triple = stdout.lines().filter(|l|{l.starts_with("host: ")}).nth(0).unwrap().get(6..).unwrap();
+    let triple = stdout.lines().filter(|l|{l.starts_with("host: ")}).next().unwrap().get(6..).unwrap();
     triple.into()
 }
 

@@ -48,7 +48,7 @@
 //! Create a target to fuzz
 //! 
 //! ```rust,should_panic
-//! #[macro_use] extern crate honggfuzz;
+//! use honggfuzz::fuzz;
 //! 
 //! fn main() {
 //!     // Here you can parse `std::env::args and 
@@ -177,9 +177,8 @@
 //! When building with `cargo hfuzz`, the argument `--cfg fuzzing` is passed to `rustc` to allow you to condition the compilation of thoses adaptations thanks to the `cfg` macro like so:
 //! 
 //! ```rust
-//! # extern crate rand;
-//! # extern crate rand_chacha;
-//! # use rand::{Rng, SeedableRng};
+//! # use rand::{self, Rng, SeedableRng};
+//! # use rand_chacha;
 //! # fn main() {
 //! #[cfg(fuzzing)]
 //! let mut rng = rand_chacha::ChaCha8Rng::from_seed(&[0]);
@@ -206,13 +205,7 @@
 //! This crate was inspired by those projects!
 
 /// Re-export of arbitrary crate used to generate structured inputs
-pub extern crate arbitrary;
-
-#[cfg(all(fuzzing, not(fuzzing_debug)))]
-#[macro_use] extern crate lazy_static;
-
-#[cfg(all(fuzzing, fuzzing_debug))]
-extern crate memmap;
+pub use arbitrary;
 
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
 extern "C" {
@@ -229,7 +222,6 @@ extern "C" {
 /// [`std::panic::UnwindSafe`] trait.
 ///
 /// ```rust,should_panic
-/// # extern crate honggfuzz;
 /// # use honggfuzz::fuzz;
 /// # fn main() {
 /// loop {
@@ -256,7 +248,7 @@ pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
 // It is useful to abort before unwinding so that the fuzzer will then be
 // able to analyse the process stack frames to tell different bugs appart.
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
-lazy_static! {
+lazy_static::lazy_static! {
     static ref PANIC_HOOK: () = {
         std::panic::set_hook(Box::new(|_| {
             std::process::abort();
@@ -337,7 +329,7 @@ pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
 /// For perstistent fuzzing to work, you have to call it ad vita aeternam in an infinite loop.
 ///
 /// ```rust,should_panic
-/// # #[macro_use] extern crate honggfuzz;
+/// # use honggfuzz::fuzz;
 /// # fn main() {
 /// loop {
 ///     fuzz!(|data: &[u8]| {
@@ -354,13 +346,13 @@ pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
 #[macro_export]
 macro_rules! fuzz {
     (|$buf:ident| $body:block) => {
-        honggfuzz::fuzz(|$buf| $body);
+        $crate::fuzz(|$buf| $body);
     };
     (|$buf:ident: &[u8]| $body:block) => {
-        honggfuzz::fuzz(|$buf| $body);
+        $crate::fuzz(|$buf| $body);
     };
     (|$buf:ident: $dty:ty| $body:block) => {
-        honggfuzz::fuzz(|$buf| {
+        $crate::fuzz(|$buf| {
             let $buf: $dty = {
                 use $crate::arbitrary::{Arbitrary, Unstructured};
 
