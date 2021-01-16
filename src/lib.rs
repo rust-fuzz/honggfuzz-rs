@@ -22,6 +22,7 @@
 //! * GNU Make: `make`
 //! * GNU Binutils development files for the BFD library: `libbfd.h`
 //! * libunwind development files: `libunwind.h`
+//! * liblzma development files
 //! 
 //! For example on Debian and its derivatives:
 //! 

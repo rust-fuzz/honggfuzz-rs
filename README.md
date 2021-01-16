@@ -38,6 +38,7 @@ Honggfuzz is a security oriented fuzzer with powerful analysis options. Supports
 * GNU Binutils development files for the BFD library: `libbfd.h`
 * libunwind development files: `libunwind.h`
 * Blocks runtime library (when compiling with clang)
+* liblzma development files
 
 For example on Debian and its derivatives:
 
