@@ -26,7 +26,7 @@ travis-ci = { repository = "rust-fuzz/honggfuzz-rs", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-arbitrary = "0.4"
+arbitrary = "1"
 
 [dev-dependencies]
 rand = "0.8"
