@@ -1,7 +1,7 @@
-# honggfuzz-rs [![Build Status][travis-img]][travis] [![Crates.io][crates-img]][crates] [![Documentation][docs-img]][docs]
+# honggfuzz-rs [![Build Status][build-img]][build] [![Crates.io][crates-img]][crates] [![Documentation][docs-img]][docs]
 
-[travis-img]:   https://travis-ci.org/rust-fuzz/honggfuzz-rs.svg?branch=master
-[travis]:       https://travis-ci.org/rust-fuzz/honggfuzz-rs
+[build-img]:   https://github.com/rust-fuzz/honggfuzz-rs/actions/workflows/rust.yml/badge.svg
+[build]:       https://github.com/rust-fuzz/honggfuzz-rs/actions/workflows/rust.yml
 [crates-img]:   https://img.shields.io/crates/v/honggfuzz.svg
 [crates]:       https://crates.io/crates/honggfuzz
 [docs-img]:     https://docs.rs/honggfuzz/badge.svg
