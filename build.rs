@@ -22,7 +22,10 @@ fn main() {
     // check that "cargo hfuzz" command is at the same version as this file
     let honggfuzz_build_version = env::var("CARGO_HONGGFUZZ_BUILD_VERSION").unwrap_or("unknown".to_string());
     if VERSION != honggfuzz_build_version {
-        eprintln!("honggfuzz dependency ({}) and build command ({}) versions do not match",
+        eprintln!("The version of the honggfuzz library dependency ({0}) and the version of the `cargo-hfuzz` executable ({1}) do not match.\n\
+                   If updating both by running `cargo update` and `cargo install honggfuzz` does not work, you can either:\n\
+                   - change the dependency in `Cargo.toml` to `honggfuzz = \"={1}\"`\n\
+                   - or run `cargo install honggfuzz --version {0}`",
                   VERSION, honggfuzz_build_version);
         process::exit(1);
     }
