@@ -19,12 +19,10 @@ enum BuildType {
     Debug
 }
 
-// TODO: maybe use `rustc_version` crate
+
+#[inline(always)]
 fn target_triple() -> String {
-    let output = Command::new("rustc").args(&["-v", "-V"]).output().unwrap();
-    let stdout = String::from_utf8(output.stdout).unwrap();
-    let triple = stdout.lines().filter(|l|{l.starts_with("host: ")}).next().unwrap().get(6..).unwrap();
-    triple.into()
+    rustc_version::version_meta().expect("RUSTC version data is available. qed").host
 }
 
 fn find_crate_root() -> Option<PathBuf> {
@@ -41,22 +39,26 @@ fn find_crate_root() -> Option<PathBuf> {
     Some(path)
 }
 
-fn debugger_command(target: &str) -> Command {
+fn debugger_command(target: &str, triple: &str) -> Command {
     let debugger = env::var("HFUZZ_DEBUGGER").unwrap_or_else(|_| "rust-lldb".into());
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
 
     let mut cmd = Command::new(&debugger);
 
-    match Path::new(&debugger).file_name().map(|f| f.to_string_lossy().contains("lldb")) {
+    let dest = format!("{}/{}/debug/{}", &honggfuzz_target, triple, target);
+    match Path::new(&debugger)
+        .file_name()
+        .map(|f| f.to_string_lossy().contains("lldb"))
+    {
         Some(true) => {
-            cmd.args(&["-o", "b rust_panic", "-o", "r", "-o", "bt", "-f", &format!("{}/{}/debug/{}", &honggfuzz_target, target_triple(), target), "--"]);
+            cmd.args(&["-o", "b rust_panic", "-o", "r", "-o", "bt", "-f", &dest, "--"]);
         }
         _ => {
-            cmd.args(&["-ex", "b rust_panic", "-ex", "r", "-ex", "bt", "--args", &format!("{}/{}/debug/{}", &honggfuzz_target, target_triple(), target)]);
+            cmd.args(&["-ex", "b rust_panic", "-ex", "r", "-ex", "bt", "--args", &dest]);
         }
     };
 
-    cmd 
+    cmd
 }
 
 fn hfuzz_version() {
@@ -75,14 +77,15 @@ fn hfuzz_run<T>(mut args: T, crate_root: &Path, build_type: &BuildType) where T:
 
     hfuzz_build(vec!["--bin".to_string(), target.clone()].into_iter(), crate_root, build_type);
 
-    match *build_type {
+    let triple = target_triple();
+    match build_type {
         BuildType::Debug => {
             let crash_filename = args.next().unwrap_or_else(||{
                 eprintln!("please specify the crash filename like this \"cargo hfuzz run-debug TARGET CRASH_FILENAME [ ARGS ... ]\"");
                 process::exit(1);
             });
 
-            let status = debugger_command(&target)
+            let status = debugger_command(&target, &triple)
                 .args(args)
                 .env("CARGO_HONGGFUZZ_CRASH_FILENAME", crash_filename)
                 .env("RUST_BACKTRACE", env::var("RUST_BACKTRACE").unwrap_or_else(|_| "1".into()))
@@ -147,7 +150,7 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: s
     -C debug-assertions \
     -C overflow_checks \
     ".to_string();
-    
+
     let mut cargo_incremental = "1";
     match *build_type {
         BuildType::Debug => {
@@ -220,15 +223,15 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: s
         .env("CARGO_INCREMENTAL", cargo_incremental)
         .env("CARGO_TARGET_DIR", &honggfuzz_target) // change target_dir to not clash with regular builds
         .env("CRATE_ROOT", &crate_root);
-    
+
     if *build_type == BuildType::ProfileWithGrcov {
         command.env("CARGO_HONGGFUZZ_BUILD_VERSION", VERSION)   // used by build.rs to check that versions are in sync
-            .env("CARGO_HONGGFUZZ_TARGET_DIR", &honggfuzz_target); // env variable to be read by build.rs script 
+            .env("CARGO_HONGGFUZZ_TARGET_DIR", &honggfuzz_target); // env variable to be read by build.rs script
     }                                                              // to place honggfuzz executable at a known location
     else if *build_type != BuildType::Debug {
         command.arg("--release")
             .env("CARGO_HONGGFUZZ_BUILD_VERSION", VERSION)   // used by build.rs to check that versions are in sync
-            .env("CARGO_HONGGFUZZ_TARGET_DIR", &honggfuzz_target); // env variable to be read by build.rs script 
+            .env("CARGO_HONGGFUZZ_TARGET_DIR", &honggfuzz_target); // env variable to be read by build.rs script
     }                                                              // to place honggfuzz executable at a known location
 
     let status = command.status().unwrap();
