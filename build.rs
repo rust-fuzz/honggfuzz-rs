@@ -1,4 +1,5 @@
 use std::env;
+use std::path::PathBuf;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -34,10 +35,23 @@ macro_rules! run_cmd {
 
 fn main() {
     // Only build honggfuzz binaries if we are in the process of building an instrumentized binary
-    let honggfuzz_target=  match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
-        Ok(path) => path, // path where to place honggfuzz binary. provided by cargo-hfuzz command.
-        Err(_) => return
+    let honggfuzz_target = match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
+        Ok(path) => PathBuf::from(path), // path where to place honggfuzz binary. provided by cargo-hfuzz command.
+        Err(_) => return,
     };
+
+    let out_dir = env::var("OUT_DIR").unwrap(); // from cargo
+    let crate_root = env::var("CRATE_ROOT").unwrap(); //from honggfuzz
+
+    let honggfuzz_target = if honggfuzz_target.is_absolute() {
+        // in case CARGO_HONGGFUZZ_TARGET_DIR was initialized
+        // from an absolute CARGO_TARGET_DIR we should not
+        // prepend the crate root again
+        honggfuzz_target
+    } else {
+        PathBuf::from(crate_root).join(honggfuzz_target)
+    };
+
 
     // check that "cargo hfuzz" command is at the same version as this file
     let honggfuzz_build_version = env::var("CARGO_HONGGFUZZ_BUILD_VERSION").unwrap_or("unknown".to_string());
@@ -47,11 +61,8 @@ fn main() {
                    - change the dependency in `Cargo.toml` to `honggfuzz = \"={1}\"`\n\
                    - or run `cargo install honggfuzz --version {0}`",
                   VERSION, honggfuzz_build_version);
-        process::exit(1);
+        std::process::exit(1);
     }
-
-    let out_dir = env::var("OUT_DIR").unwrap(); // from cargo
-    let crate_root = env::var("CRATE_ROOT").unwrap(); //from honggfuzz
 
     // clean upsteam honggfuzz directory
     run_cmd!("{} -C honggfuzz clean", GNU_MAKE);
@@ -66,7 +77,7 @@ fn main() {
     run_cmd!("cp honggfuzz/libhfcommon/libhfcommon.a {}", &out_dir);
 
     // copy honggfuzz executable to honggfuzz target directory
-    run_cmd!("cp honggfuzz/honggfuzz {}/{}", &crate_root, &honggfuzz_target);
+    run_cmd!("cp honggfuzz/honggfuzz {}", honggfuzz_target.display());
 
     // tell cargo how to link final executable to hfuzz static library
     println!("cargo:rustc-link-lib=static={}", "hfuzz");
