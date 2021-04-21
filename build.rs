@@ -1,5 +1,4 @@
 use std::env;
-use std::process::{self, Command};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -11,6 +10,27 @@ compile_error!("honggfuzz-rs does not currently support Windows but works well u
 const GNU_MAKE: &str = "make";
 #[cfg(any(target_os = "freebsd", target_os = "dragonfly", target_os = "bitrig", target_os = "openbsd", target_os = "netbsd"))]
 const GNU_MAKE: &str = "gmake";
+
+
+#[track_caller]
+fn run_cmd(cmd: impl std::convert::AsRef<str>) {
+    let full = cmd.as_ref();
+    let mut iter = full.split_whitespace();
+    let cmd = iter.next().expect("Command is never empty. qed");
+    let status = ::std::process::Command::new(cmd)
+        .args(iter)
+        .status()
+        .expect(format!("Failed to spawn process \"{}\"", &full).as_str());
+
+    assert!(status.success(), "Command failed ({:?}): \"{}\"", &status, &full);
+}
+
+macro_rules! run_cmd {
+    ($fmtcmd:expr $(, $args:expr )* $(,)? ) => {
+        let full: String = format!($fmtcmd $(, $args )*);
+        run_cmd(full);
+    };
+}
 
 fn main() {
     // Only build honggfuzz binaries if we are in the process of building an instrumentized binary
@@ -34,38 +54,19 @@ fn main() {
     let crate_root = env::var("CRATE_ROOT").unwrap(); //from honggfuzz
 
     // clean upsteam honggfuzz directory
-    let status = Command::new(GNU_MAKE)
-        .args(&["-C", "honggfuzz", "clean"])
-        .status()
-        .expect("failed to run \"make -C honggfuzz clean\"");
-    assert!(status.success());
+    run_cmd!("{} -C honggfuzz clean", GNU_MAKE);
     // TODO: maybe it's not a good idea to always clean the sources..
 
     // build honggfuzz command and hfuzz static library
-    let status = Command::new(GNU_MAKE)
-        .args(&["-C", "honggfuzz", "honggfuzz", "libhfuzz/libhfuzz.a", "libhfcommon/libhfcommon.a"])
-        .status()
-        .expect("failed to run \"make -C honggfuzz hongfuzz libhfuzz/libhfuzz.a libhfcommon/libhfcommon.a\"");
-    assert!(status.success());
+    run_cmd!("{} -C honggfuzz honggfuzz libhfuzz/libhfuzz.a libhfcommon/libhfcommon.a", GNU_MAKE);
 
     // copy hfuzz static library to output directory
-    let status = Command::new("cp")
-        .args(&["honggfuzz/libhfuzz/libhfuzz.a", &out_dir])
-        .status()
-        .expect(&format!("failed to run \"cp honggfuzz/libhfuzz/libhfuzz.a {}\"", &out_dir));
-    assert!(status.success());
-    let status = Command::new("cp")
-        .args(&["honggfuzz/libhfcommon/libhfcommon.a", &out_dir])
-        .status()
-        .expect(&format!("failed to run \"cp honggfuzz/libhfcommon/libhfcommon.a {}\"", &out_dir));
-    assert!(status.success());
+    run_cmd!("cp honggfuzz/libhfuzz/libhfuzz.a {}", &out_dir);
+
+    run_cmd!("cp honggfuzz/libhfcommon/libhfcommon.a {}", &out_dir);
 
     // copy honggfuzz executable to honggfuzz target directory
-    let status = Command::new("cp")
-        .args(&["honggfuzz/honggfuzz", &format!("{}/{}", &crate_root, &honggfuzz_target)])
-        .status()
-        .expect(&format!("failed to run \"cp honggfuzz/honggfuzz {}\"", &honggfuzz_target));
-    assert!(status.success());
+    run_cmd!("cp honggfuzz/honggfuzz {}/{}", &crate_root, &honggfuzz_target);
 
     // tell cargo how to link final executable to hfuzz static library
     println!("cargo:rustc-link-lib=static={}", "hfuzz");
