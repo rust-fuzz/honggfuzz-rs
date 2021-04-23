@@ -12,7 +12,7 @@ const HONGGFUZZ_WORKSPACE: &str = "hfuzz_workspace";
 #[cfg(target_family="windows")]
 compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
 
-#[derive(PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum BuildType {
     ReleaseInstrumented,
     ReleaseNotInstrumented,
@@ -26,18 +26,18 @@ fn target_triple() -> Result<String> {
     Ok(rustc_version::version_meta()?.host)
 }
 
-fn find_crate_root() -> Option<PathBuf> {
-    let mut path = env::current_dir().unwrap();
-
+fn find_crate_root() -> Result<PathBuf> {
+    let path = env::current_dir()
+        .map_err(|e| anyhow::anyhow!("Current directory is not set for process.").context(e))?;
+    let mut path = path.as_path();
     while !path.join("Cargo.toml").is_file() {
         // move to parent path
-        path = match path.parent() {
-            Some(parent) => parent.into(),
-            None => return None, // early return
-        };
+        path = path
+            .parent()
+            .ok_or_else(|| anyhow::anyhow!("Reached root without finding Cargo.toml"))?;
     }
 
-    Some(path)
+    Ok(path.to_path_buf())
 }
 
 fn debugger_command(target: &str, triple: &str) -> Command {
@@ -97,13 +97,14 @@ fn hfuzz_run<T>(mut args: T, crate_root: &Path, build_type: BuildType) -> Result
         _ => {
             // add some flags to sanitizers to make them work with Rust code
             let asan_options = env::var("ASAN_OPTIONS").unwrap_or_default();
-            let asan_options = format!("detect_odr_violation=0:{}", asan_options);
+            let asan_options = "detect_odr_violation=0:".to_owned() + asan_options.as_str();
 
             let tsan_options = env::var("TSAN_OPTIONS").unwrap_or_default();
-            let tsan_options = format!("report_signal_unsafe=0:{}", tsan_options);
+            let tsan_options = "report_signal_unsafe=0:".to_owned() + tsan_options.as_str();
 
             // get user-defined args for honggfuzz
             let hfuzz_run_args = env::var("HFUZZ_RUN_ARGS").unwrap_or_default();
+
             // FIXME: we split by whitespace without respecting escaping or quotes
             let hfuzz_run_args = hfuzz_run_args.split_whitespace();
 
@@ -127,19 +128,6 @@ fn hfuzz_run<T>(mut args: T, crate_root: &Path, build_type: BuildType) -> Result
 
 fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: BuildType) -> Result<()> where T: std::iter::Iterator<Item=String> {
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
-
-    // HACK: temporary fix, see https://github.com/rust-lang/rust/issues/53945#issuecomment-426824324
-    let use_gold_linker: bool = match Command::new("which") // check if the gold linker is available
-            .args(&["ld.gold"])
-            .status() {
-        Err(_) => false,
-        Ok(status) => {
-            match status.code() {
-                Some(0) => true,
-                _       => false
-            }
-        }
-    };
 
     let mut rustflags = "\
     --cfg fuzzing \
@@ -195,7 +183,8 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: BuildType) -> Result<(
                 }
 
                 // HACK: temporary fix, see https://github.com/rust-lang/rust/issues/53945#issuecomment-426824324
-                if use_gold_linker {
+                // HACK: check if the gold linker is available
+                if which::which("ld.gold").is_ok() {
                     rustflags.push_str("-Clink-arg=-fuse-ld=gold ");
                 }
             }
