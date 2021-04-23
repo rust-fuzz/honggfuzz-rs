@@ -1,4 +1,4 @@
-use std::fs;
+use fs_err as fs;
 use std::env;
 use std::process::{self, Command};
 use std::os::unix::process::CommandExt;
