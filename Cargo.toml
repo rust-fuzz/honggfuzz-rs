@@ -28,12 +28,18 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 arbitrary = "1.0"
 rustc_version = "0.3.3"
+docopt = "1.1"
+serde = "1.0"
+anyhow = "1.0"
 fs-err = "2.5"
 which = "4.1"
+log = "0.4"
+pretty_env_logger = "0.4"
 
 [dev-dependencies]
 rand = "0.8"
 rand_chacha = "0.3"
+assert_matches = "1"
 
 [target.'cfg(fuzzing)'.dependencies]
 lazy_static = "1.4"
