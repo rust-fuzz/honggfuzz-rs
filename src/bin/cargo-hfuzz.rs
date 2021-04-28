@@ -11,6 +11,77 @@ const HONGGFUZZ_WORKSPACE: &str = "hfuzz_workspace";
 #[cfg(target_family="windows")]
 compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
 
+use structopt::StructOpt;
+
+#[derive(Debug, StructOpt)]
+#[structopt(name = "cargo-hfuzz", about = "Fuzz your Rust code with Google-developed Honggfuzz !")]
+struct Opt {
+    #[structopt(subcommand)]
+    command: OptSub,
+}
+
+#[derive(Debug, StructOpt)]
+struct CommonOpts {
+    /// only build binary but don't execute it
+    #[structopt(long)]
+    only_build: bool,
+
+    /// flags given to `rustc`, for example "-Z sanitizer=address"
+    #[structopt(long, env = "RUSTFLAGS")]
+    rustflags: Option<String>,
+
+    /// args given to `cargo build`
+    #[structopt(long, env = "HFUZZ_BUILD_ARGS")]
+    build_args: Option<String>,
+
+    /// path to working directory
+    #[structopt(short, long, default_value = "hfuzz_workspace", env = "HFUZZ_WORKSPACE")]
+    workspace: String,
+}
+
+#[derive(Debug, StructOpt)]
+enum OptSub {
+    /// build and run fuzzing
+    Fuzz {
+        #[structopt(flatten)]
+        common_opts: CommonOpts,
+
+        /// path to fuzzer's input files (aka "corpus"), relative to `$HFUZZ_WORKSPACE/{TARGET}`
+        #[structopt(short, long, default_value = "input", env = "HFUZZ_INPUT")]
+        input: String,
+
+        /// which binary target to fuzz
+        target: String,
+
+        /// do no build with compiler instrumentation
+        #[structopt(long)]
+        no_instr: bool,
+
+        /// args to target -- args to fuzzer
+        /// ( https://github.com/google/honggfuzz/blob/master/docs/USAGE.md )
+        args: Vec<String>,
+    },
+
+    Debug {
+        #[structopt(flatten)]
+        common_opts: CommonOpts,
+
+        /// name or path to debugger, like `rust-gdb`, `gdb`, `/usr/bin/lldb-7`..
+        #[structopt(short, long, default_value = "rust-lldb", env = "HFUZZ_DEBUGGER")]
+        debugger: String,
+
+        /// which binary target to fuzz
+        target: String,
+
+        /// path to crash file, typically like `hfuzz_workspace/[TARGET]/[..].fuzz`
+        crash_file: PathBuf,
+
+        /// args to target
+        target_args: Vec<String>,
+    },
+    Clean,
+}
+
 #[derive(PartialEq)]
 enum BuildType {
     ReleaseInstrumented,
@@ -252,7 +323,9 @@ fn hfuzz_clean<T>(args: T) where T: std::iter::Iterator<Item=String> {
 }
 
 fn main() {
-    // TODO: maybe use `clap` crate
+    let opt = Opt::from_args();
+    println!("{:?}", opt);
+    return; // WIP
 
     let mut args = env::args().skip(1);
     if args.next() != Some("hfuzz".to_string()) {
