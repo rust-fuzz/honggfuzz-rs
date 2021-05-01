@@ -28,6 +28,7 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 arbitrary = "1.0"
 rustc_version = "0.3.3"
+anyhow = "1.0"
 fs-err = "2.5"
 
 [dev-dependencies]

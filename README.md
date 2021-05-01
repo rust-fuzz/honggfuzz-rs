@@ -192,7 +192,6 @@ For instance:
 * Try to avoid modifying global state when possible.
 * Do not set up your own panic hook when run with `cfg(fuzzing)`
 
-
 When building with `cargo hfuzz`, the argument `--cfg fuzzing` is passed to `rustc` to allow you to condition the compilation of thoses adaptations thanks to the `cfg` macro like so:
 
 ```rust
