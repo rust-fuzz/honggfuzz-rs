@@ -36,4 +36,4 @@ rand_chacha = "0.3"
 lazy_static = "1.4"
 
 [target.'cfg(fuzzing_debug)'.dependencies]
-memmap = "0.7"
+mapr = "0.8"
