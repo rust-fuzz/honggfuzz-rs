@@ -1,18 +1,181 @@
-use anyhow::Result;
-use docopt::Docopt;
-use fs_err as fs;
-use serde::Deserialize;
+use std::fs;
 use std::env;
+use std::process::{self, Command};
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use anyhow::Result;
+use std::time::Duration;
+use structopt::StructOpt;
 
+/// The version of `cargo-hfuzz` cli tooling.
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const HONGGFUZZ_TARGET: &str = "hfuzz_target";
 const HONGGFUZZ_WORKSPACE: &str = "hfuzz_workspace";
 
 #[cfg(target_family="windows")]
 compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
+
+#[derive(Debug, StructOpt)]
+#[structopt(name = "cargo-hfuzz", about = "Fuzz your Rust code with Google-developed Honggfuzz !")]
+struct Opt {
+    #[structopt(subcommand)]
+    command: SubCommand,
+}
+
+impl Opt {
+    fn verbosity(&self) -> log::LevelFilter {
+        self.command.verbosity()
+    }
+}
+/// Shared options for multiple sub-commands.
+#[derive(Debug, StructOpt)]
+struct CommonOpts {
+    /// only build binary but don't execute it
+    #[structopt(long)]
+    only_build: bool,
+
+    /// flags given to `rustc`, for example "-Z sanitizer=address"
+    #[structopt(long, env = "RUSTFLAGS")]
+    rustflags: Option<String>,
+
+    /// args given to `cargo build`
+    #[structopt(long, env = "HFUZZ_BUILD_ARGS")]
+    build_args: Option<String>,
+
+    /// path to working directory
+    #[structopt(short, long, default_value = "hfuzz_workspace", env = "HFUZZ_WORKSPACE")]
+    workspace: String,
+}
+
+#[derive(Debug, StructOpt)]
+enum SubCommand {
+    /// build and run fuzzing
+    Fuzz {
+
+        #[structopt(flatten)]
+        common: CommonOpts,
+
+        /// path to fuzzer's input files (aka "corpus"), relative to `$HFUZZ_WORKSPACE/{TARGET}`
+        #[structopt(short, long, default_value = "input", env = "HFUZZ_INPUT")]
+        input: String,
+
+        /// which binary to fuzz
+        #[structopt(short, long)]
+        binary: String,
+
+        /// do no build with compiler instrumentation
+        #[structopt(long)]
+        no_instr: bool,
+
+        /// use grcov coverage information
+        #[structopt(long)]
+        grcov: bool,
+
+        #[structopt(flatten)]
+        launch: HonggfuzzLaunchArgs,
+
+        /// args to the binary, followed by an optional `--` which are interpreted by the fuzzer itself
+        /// ( https://github.com/google/honggfuzz/blob/master/docs/USAGE.md )
+        args: Vec<String>,
+    },
+
+    /// Debug
+    Debug {
+        #[structopt(flatten)]
+        common: CommonOpts,
+
+        /// name or path to debugger, like `rust-gdb`, `gdb`, `/usr/bin/lldb-7`..
+        #[structopt(short, long, default_value = "rust-lldb", env = "HFUZZ_DEBUGGER")]
+        debugger: String,
+
+        /// which binary target to fuzz
+        #[structopt(short, long)]
+        binary: String,
+
+        /// path to crash file, typically like `hfuzz_workspace/[TARGET]/[..].fuzz`
+        #[structopt(short, long)]
+        crash_file: PathBuf,
+
+        /// args to target
+        target_args: Vec<String>,
+    },
+
+
+    /// Minimize
+    Minimize,
+    /// Clean the saved fuzzing state and all related files.
+    Clean { args: Vec<String> },
+}
+
+impl SubCommand {
+    pub fn verbosity(&self) -> log::LevelFilter {
+        log::LevelFilter::Trace
+    }
+}
+
+impl SubCommand {
+    pub fn launch(mut self, crate_root: impl AsRef<Path>) -> Result<()> {
+        let crate_root = crate_root.as_ref();
+        let target_triple = target_triple()?;
+        match self {
+            Self::Clean { args }  => {
+                hfuzz_clean( args )?;
+            }
+            Self::Minimize => {
+                // https://github.com/rust-fuzz/honggfuzz-rs/issues/26
+                todo!(" --minimize --input .. --output ..")
+            }
+            Self::Fuzz { launch, common, no_instr, binary, input, grcov, args } => {
+                let build_type = if no_instr {
+                    BuildType::ReleaseNotInstrumented
+                } else if grcov {
+                    // grcov and instrumentation are mutually exclusive,
+                    // only due to the fact, grcov is used in debug mode
+                    // where instrumentation is commonly used in release
+                    // mode.
+                    BuildType::ProfileWithGrcov
+                } else {
+                    BuildType::ReleaseInstrumented
+                };
+
+                // FIXME split args in cargo build args and target args
+
+                let args = args.into_iter();
+                let build_args = args.take_while(|arg| arg != "--").collect::<Vec<_>>();
+                let target_args = args.collect::<Vec<_>>();
+                if common.only_build {
+                    hfuzz_build(binary.to_string(), build_args, &crate_root, build_type)?;
+                } else {
+                    hfuzz_run(launch, binary, target_args, &crate_root, build_type)?;
+                }
+            }
+            Self::Debug { common, binary, target_args, crash_file, debugger, .. } => {
+                let build_type = BuildType::Debug;
+
+                hfuzz_build(binary.to_string(), Vec::<String>::new(), crate_root, build_type);
+
+                let status = debugger_command(&binary.to_string(), &target_triple)
+                    .args(target_args)
+                    .env("CARGO_HONGGFUZZ_CRASH_FILENAME", crash_file)
+                    .env("RUST_BACKTRACE", env::var("RUST_BACKTRACE").unwrap_or_else(|_| "1".into()))
+                    .status()?;
+
+                if !status.success() {
+                     process::exit(status.code().unwrap_or(1));
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+struct HonggfuzzLaunchArgs {
+    timeout: Option<Duration>,
+    exit_upon_crash: Option<bool>,
+    n_iterations: Option<u64>,
+    quiet: bool,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum BuildType {
@@ -68,97 +231,79 @@ fn hfuzz_version() {
     println!("cargo-hfuzz {}", VERSION);
 }
 
-fn hfuzz_run(args: Args, crate_root: &Path, build_type: BuildType) -> Result<()> {
-    let target = args
-        .arg_target
-        .as_ref()
-        .expect("Docopt USAGE meta definition guarantees target is set. qed");
+fn hfuzz_run(launch: HonggfuzzLaunchArgs, binary: impl ToString, args: impl IntoIterator<Item = impl ToString>, crate_root: &Path, build_type: BuildType) -> Result<()> {
 
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
     let honggfuzz_workspace = env::var("HFUZZ_WORKSPACE").unwrap_or_else(|_| HONGGFUZZ_WORKSPACE.into());
-    let honggfuzz_input = env::var("HFUZZ_INPUT").unwrap_or_else(|_| format!("{}/{}/input", honggfuzz_workspace, target));
+    let honggfuzz_input = env::var("HFUZZ_INPUT").unwrap_or_else(|_| format!("{}/{}/input", honggfuzz_workspace, binary.to_string()));
 
-    {
-        let mut args = args.clone();
-        let extra = vec!["--bin".to_owned(), target.clone()];
-        args.arg_sub = extra.into();
-        hfuzz_build(args, crate_root, build_type)?;
-    }
+    hfuzz_build(binary.to_string(), &[], crate_root, build_type)?;
 
     let triple = target_triple()?;
-    match build_type {
-        BuildType::Debug => {
-            let crash_filename = args
-                .arg_crash_filename
-                .expect("Guaranteed by docopt meta desc. qed");
 
-            let status = debugger_command(&target, &triple)
-                .args(args.arg_sub)
-                .env("CARGO_HONGGFUZZ_CRASH_FILENAME", crash_filename)
-                .env("RUST_BACKTRACE", env::var("RUST_BACKTRACE").unwrap_or_else(|_| "1".into()))
-                .status()?;
-            if !status.success() {
-                anyhow::bail!("Process did exit with code: {}", status.code().unwrap_or(1));
-            }
-        }
-        _ => {
-            // add some flags to sanitizers to make them work with Rust code
-            let asan_options = env::var("ASAN_OPTIONS").unwrap_or_default();
-            let asan_options = "detect_odr_violation=0:".to_owned() + asan_options.as_str();
+    // add some flags to sanitizers to make them work with Rust code
+    let asan_options = env::var("ASAN_OPTIONS").unwrap_or_default();
+    let asan_options = "detect_odr_violation=0:".to_owned() + asan_options.as_str();
 
-            let tsan_options = env::var("TSAN_OPTIONS").unwrap_or_default();
-            let tsan_options = "report_signal_unsafe=0:".to_owned() + tsan_options.as_str();
+    let tsan_options = env::var("TSAN_OPTIONS").unwrap_or_default();
+    let tsan_options = "report_signal_unsafe=0:".to_owned() + tsan_options.as_str();
 
-            // get user-defined args for honggfuzz
-            let hfuzz_run_args = env::var("HFUZZ_RUN_ARGS").unwrap_or_default();
-            log::debug!("HFUZZ_RUN_ARGS: {}", hfuzz_run_args);
+    // get user-defined args for honggfuzz
+    let hfuzz_run_args = env::var("HFUZZ_RUN_ARGS").unwrap_or_default();
+    log::debug!("HFUZZ_RUN_ARGS: {}", hfuzz_run_args);
 
-            // FIXME: we split by whitespace without respecting escaping or quotes
-            let hfuzz_run_args = hfuzz_run_args.split_whitespace();
+    // FIXME: we split by whitespace without respecting escaping or quotes
+    let hfuzz_run_args = hfuzz_run_args.split_whitespace();
 
-            fs::create_dir_all(&format!("{}/{}/input", &honggfuzz_workspace, target))?;
+    fs::create_dir_all(&format!("{}/{}/input", &honggfuzz_workspace, binary.to_string()))?;
 
-            let command = format!("{}/honggfuzz", &honggfuzz_target);
+    let command = format!("{}/honggfuzz", &honggfuzz_target);
 
-            let mut arguments = vec!["-W".to_owned(), format!("{}/{}", &honggfuzz_workspace, target), "-f".to_owned(), honggfuzz_input.to_owned(), "-P".to_owned()];
-            arguments.extend(hfuzz_run_args.map(ToString::to_string));
-            arguments.extend(args.arg_sub.into_iter());
+    let mut arguments: Vec<String> = vec![
+        "-W".to_owned(),
+        format!("{}/{}", &honggfuzz_workspace, binary.to_string()),
+        "-f".to_owned(),
+        honggfuzz_input.to_owned(),
+        "-P".to_owned()
+    ];
+    arguments.extend(hfuzz_run_args.map(|x| x.to_string()));
+    arguments.extend(args.into_iter().map(|x| x.to_string()));
 
-            // exec honggfuzz replacing current process
-            let mut cmd = Command::new(&command);
-            cmd
-                .env("ASAN_OPTIONS", asan_options)
-                .env("TSAN_OPTIONS", tsan_options);
-            if let Some(timeout) = args.flag_timeout {
-                arguments.extend(vec!["-t".to_owned(), timeout.to_string()]);
-            }
-            if let Some(n) = args.flag_iterations {
-                arguments.extend(vec!["-N".to_owned(), n.to_string()]);
-            }
-            if args.flag_quiet {
-                arguments.push("--quiet".to_owned());
-            }
-            if args.flag_verbose > 0 {
-                arguments.push("--verbose".to_owned());
-            }
-            if let Some(exitcode) = args.flag_exit_upon_crash {
-                arguments.push("--exit_upon_crash".to_owned());
-                arguments.push("--exit_code_upon_crash".to_owned());
-                arguments.push(exitcode.to_string());
-            }
-            arguments.extend(["--", &format!("{}/{}/release/{}", &honggfuzz_target, triple, target)].iter().map(ToString::to_string));
-
-            log::debug!("Exec: {} {}", &command, arguments.join(" "));
-
-            cmd.args(arguments).exec();
-
-            anyhow::bail!("Failed to execute {} \"cargo hfuzz build\" from fuzzed project directory", &command)
-        }
+    // exec honggfuzz replacing current process
+    let mut cmd = Command::new(&command);
+    cmd
+        .env("ASAN_OPTIONS", asan_options)
+        .env("TSAN_OPTIONS", tsan_options);
+    if let Some(timeout) = launch.timeout {
+        arguments.extend(vec!["-t".to_owned(), timeout.as_secs().to_string() ]);
     }
-    Ok(())
+    if let Some(n) = launch.n_iterations {
+        arguments.extend(vec!["-N".to_owned(), n.to_string()]);
+    }
+    if launch.quiet {
+        arguments.push("--quiet".to_owned());
+    }
+    if verbose > 0 {
+        arguments.push("--verbose".to_owned());
+    }
+    if let Some(exitcode) = launch.exit_upon_crash {
+        arguments.push("--exit_upon_crash".to_owned());
+        arguments.push("--exit_code_upon_crash".to_owned());
+        arguments.push(exitcode.to_string());
+    }
+    arguments.extend(
+        ["--", &format!("{}/{}/release/{}", &honggfuzz_target, triple, binary.to_string())]
+        .iter()
+        .map(ToString::to_string));
+
+    log::debug!("Exec: {} {}", &command, arguments.join(" "));
+
+    cmd.args(arguments).exec();
+
+    anyhow::bail!("Failed to execute {} \"cargo hfuzz build\" from fuzzed project directory", &command)
 }
 
-fn hfuzz_build(args: Args, crate_root: &Path, build_type: BuildType) -> Result<()> {
+fn hfuzz_build(binary: impl ToString, args: impl IntoIterator<Item = impl ToString>, crate_root: &Path, build_type: BuildType) -> Result<()> {
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
 
     let mut rustflags = "\
@@ -236,9 +381,9 @@ fn hfuzz_build(args: Args, crate_root: &Path, build_type: BuildType) -> Result<(
     let cargo_bin = env::var("CARGO").unwrap();
     let mut command = Command::new(&cargo_bin);
     // HACK to avoid building build scripts with rustflags
-    let mut arguments = vec!["build".to_owned(), "--target".to_owned(), target_triple()?];
-    arguments.extend(hfuzz_build_args.map(ToString::to_string));
-    arguments.extend(args.arg_sub.iter().map(ToString::to_string));
+    let mut arguments = vec!["build".to_owned(), "--bin".to_owned(), binary.to_string(), "--target".to_owned(), target_triple()?];
+    arguments.extend(hfuzz_build_args.map(|x| x.to_string()));
+    arguments.extend(args.into_iter().map(|x| x.to_string()));
 
     log::debug!("Spawn: {} {}", &cargo_bin, arguments.join(" "));
 
@@ -270,12 +415,12 @@ fn hfuzz_build(args: Args, crate_root: &Path, build_type: BuildType) -> Result<(
     Ok(())
 }
 
-fn hfuzz_clean(args: Args) -> Result<()> {
+fn hfuzz_clean(args: impl IntoIterator<Item = impl ToString>) -> Result<()> {
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
     let cargo_bin = env::var("CARGO").unwrap();
     let status = Command::new(cargo_bin)
         .args(&["clean"])
-        .args(args.arg_sub)
+        .args(args.into_iter().map(|x| x.to_string()))
         .env("CARGO_TARGET_DIR", &honggfuzz_target) // change target_dir to not clash with regular builds
         .status()?;
 
@@ -286,166 +431,10 @@ fn hfuzz_clean(args: Args) -> Result<()> {
     Ok(())
 }
 
-
-
-const USAGE: &str = r#"
-cargo-hfuzz
-
-Usage:
-  cargo-hfuzz (build|build-debug|build-no-instr|build-grcov) [(-v...|-q)] [<target>] [[--] <sub>...]
-  cargo-hfuzz (run|run-no-instr) [(-v...|-q)] [--iterations=<n>] [--timeout=<sec>] [--exit-upon-crash=<exitcode>] <target> [[--] <sub>...]
-  cargo-hfuzz (run-debug) [(-v...|-q)] <target> <crash_filename> [[--] <sub>...]
-  cargo-hfuzz clean [(-v...|-q)]
-  cargo-hfuzz (-h | --help | help)
-  cargo-hfuzz (--version | version)
-
-Options:
-  <target>                      The particular cargo target binary to use for fuzzing.
-  <crash_filename>              A particular crash dump to use for debuging.
-  <sub>...                      Additional arguments passed to the sub process.
-
-  -v --verbose                  Pass --verbose to honggfuzz, enable various log levels.
-  -q --quiet                    Silence.
-  --exit-upon-crash=<exitcode>  Exit upon the first crash with non-zero exit code.
-  -t --timeout=<sec>            Total time allowed to fuzz, in seconds.
-  -N --iterations=<n>           Total of fuzzing iterations to run.
-  -h --help                     Show this screen.
-  --version                     Show version.
-"#;
-
-
-#[derive(Debug, Deserialize, Clone)]
-pub(crate) struct Args {
-    flag_version: bool,
-    flag_help: bool,
-    cmd_version: bool, // backwards compat
-    cmd_help: bool,    // backwards compat
-    cmd_build_debug: bool,
-    cmd_build_no_instr: bool,
-    cmd_build: bool,
-    cmd_build_grcov: bool,
-    cmd_run_debug: bool,
-    cmd_run_no_instr: bool,
-    cmd_run: bool,
-    cmd_clean: bool,
-    flag_iterations: Option<u64>,
-    flag_timeout: Option<u64>,
-    flag_verbose: usize,
-    flag_quiet: bool,
-    flag_exit_upon_crash: Option<usize>,
-    arg_target: Option<String>,
-    arg_crash_filename: Option<String>,
-    // the remaining arguments
-    arg_sub: Vec<String>,
-}
-
-impl Args {
-    pub fn parse<S, I>(argv_iter: I) -> Result<Self, docopt::Error>
-    where
-        I: IntoIterator<Item = S>,
-        S: AsRef<str>,
-    {
-        const CARGO_HFUZZ: &str = "cargo-hfuzz";
-        const CARGO: &str = "cargo";
-        const HFUZZ: &str = "hfuzz";
-
-        Docopt::new(USAGE).and_then(|d| {
-            // if ends with file name CARGO_HFUZZ
-            let mut argv_iter = argv_iter.into_iter();
-            if let Some(arg0) = argv_iter.next() {
-                let arg0 = arg0.as_ref();
-                match PathBuf::from(arg0)
-                    .file_name()
-                    .map(|x| x.to_str())
-                    .flatten()
-                {
-                    Some(file_name) => {
-
-                        // allow all variants to be parsed
-                        // cargo hfuzz ...
-                        // cargo-hfuzz ...
-                        //
-                        // so preprocess them to unified `cargo-spellcheck`
-                        let mut next = vec![CARGO_HFUZZ.to_owned()];
-
-                        match argv_iter.next() {
-                            Some(arg) if file_name.starts_with(CARGO_HFUZZ) && arg.as_ref() == HFUZZ => {
-                                // drop the first arg HFUZZ`
-                            }
-                            Some(arg) if file_name.starts_with(CARGO) && arg.as_ref() == HFUZZ => {
-                                // drop it, we replace it with CARGO_HFUZZ
-                            }
-                            Some(arg) if arg.as_ref() == HFUZZ => {
-                                // HFUZZ but the binary got renamed
-                                // drop the HFUZZ part
-                            }
-                            Some(arg) => {
-                                // not HFUZZ so retain it
-                                next.push(arg.as_ref().to_owned())
-                            }
-                            None => {}
-                        };
-                        let collected = next.into_iter().chain(argv_iter.map(|s| s.as_ref().to_owned()));
-                        d.argv(collected)
-                    }
-                    _ => d,
-                }
-            } else {
-                d
-            }
-            .deserialize()
-        })
-    }
-
-    fn action(&self) -> Action {
-        if self.cmd_build {
-            Action::Build(BuildType::ReleaseInstrumented)
-        } else if self.cmd_build_no_instr {
-            Action::Build(BuildType::ReleaseNotInstrumented)
-        } else if self.cmd_build_debug {
-            Action::Build(BuildType::Debug)
-        } else if self.cmd_build_grcov {
-            Action::Build(BuildType::ProfileWithGrcov)
-        } else if self.cmd_run {
-            Action::Run(BuildType::ReleaseInstrumented)
-        } else if self.cmd_run_no_instr {
-            Action::Run(BuildType::ReleaseNotInstrumented)
-        } else if self.cmd_run_debug {
-            Action::Run(BuildType::Debug)
-        } else if self.cmd_version || self.flag_version {
-            Action::Version
-        } else if self.cmd_clean {
-            Action::Clean
-        } else {
-            Action::Help
-        }
-    }
-
-    fn verbosity(&self) -> log::LevelFilter {
-        match self.flag_verbose {
-            _ if self.flag_quiet => log::LevelFilter::Off,
-            2 => log::LevelFilter::Warn,
-            3 => log::LevelFilter::Info,
-            4 => log::LevelFilter::Debug,
-            n if n > 4 => log::LevelFilter::Trace,
-            _ => log::LevelFilter::Error,
-        }
-    }
-}
-
-#[derive(Debug, Copy, Clone)]
-enum Action {
-    Build(BuildType),
-    Run(BuildType),
-    Version,
-    Clean,
-    Help,
-}
-
 fn main() -> Result<()> {
-    let args = Args::parse(env::args())?;
+    let opt = Opt::from_args();
     pretty_env_logger::formatted_timed_builder()
-        .filter_level(args.verbosity())
+        .filter_level(opt.verbosity())
         .init();
 
     // change to crate root to have the same behavior as cargo build/run
@@ -454,13 +443,7 @@ fn main() -> Result<()> {
     })?;
     env::set_current_dir(&crate_root).unwrap();
 
-    match args.action() {
-        Action::Build(ty) => hfuzz_build(args, &crate_root, ty)?,
-        Action::Run(ty) => hfuzz_run(args, &crate_root, ty)?,
-        Action::Clean => hfuzz_clean(args)?,
-        Action::Version => hfuzz_version(),
-        Action::Help => println!("{}", USAGE),
-    };
+    opt.command.launch(crate_root)?;
     Ok(())
 }
 
