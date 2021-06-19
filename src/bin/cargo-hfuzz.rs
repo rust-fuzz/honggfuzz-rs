@@ -114,7 +114,7 @@ impl SubCommand {
 }
 
 impl SubCommand {
-    pub fn launch(mut self, crate_root: impl AsRef<Path>) -> Result<()> {
+    pub fn launch(self, crate_root: impl AsRef<Path>) -> Result<()> {
         let crate_root = crate_root.as_ref();
         let target_triple = target_triple()?;
         match self {
@@ -140,21 +140,26 @@ impl SubCommand {
 
                 // FIXME split args in cargo build args and target args
 
-                let args = args.into_iter();
-                let build_args = args.take_while(|arg| arg != "--").collect::<Vec<_>>();
+                let mut args = args.into_iter();
+                let build_args = (&mut args).take_while(|arg| arg != "--").collect::<Vec<_>>();
                 let target_args = args.collect::<Vec<_>>();
+                let rustflags = common.rustflags.as_ref().map(|x| x.as_ref()).unwrap_or_default();
+                hfuzz_build(&binary, rustflags, build_args, &crate_root, build_type)?;
                 if common.only_build {
-                    hfuzz_build(binary.to_string(), build_args, &crate_root, build_type)?;
-                } else {
-                    hfuzz_run(launch, binary, target_args, &crate_root, build_type)?;
+                    return Ok(())
                 }
+                hfuzz_run(launch, &binary, target_args, &crate_root, build_type)?;
             }
-            Self::Debug { common, binary, target_args, crash_file, debugger, .. } => {
+            Self::Debug { common, binary, target_args, crash_file, debugger } => {
                 let build_type = BuildType::Debug;
 
-                hfuzz_build(binary.to_string(), Vec::<String>::new(), crate_root, build_type);
+                let rustflags = common.rustflags.as_ref().map(|x| x.as_ref()).unwrap_or_default();
+                hfuzz_build(&binary, rustflags, common.build_args, &crate_root, build_type);
 
-                let status = debugger_command(&binary.to_string(), &target_triple)
+                if common.only_build {
+                    return Ok(())
+                }
+                let status = debugger_command(&binary.to_string(), &target_triple, &debugger)
                     .args(target_args)
                     .env("CARGO_HONGGFUZZ_CRASH_FILENAME", crash_file)
                     .env("RUST_BACKTRACE", env::var("RUST_BACKTRACE").unwrap_or_else(|_| "1".into()))
@@ -169,11 +174,31 @@ impl SubCommand {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
+struct TimeoutDuration(Duration);
+
+impl std::str::FromStr for TimeoutDuration {
+    type Err = <u64 as std::str::FromStr>::Err;
+    fn from_str(s: &str) ->  Result<Self, Self::Err> {
+        Ok(Self(Duration::from_secs(u64::from_str(s)?)))
+    }
+}
+
+impl TimeoutDuration {
+    fn as_secs(&self) -> u64 {
+        self.0.as_secs() as _
+    }
+}
+
+#[derive(Debug, Clone, Default, StructOpt)]
 struct HonggfuzzLaunchArgs {
-    timeout: Option<Duration>,
+    #[structopt(long)]
+    timeout: Option<TimeoutDuration>,
+    #[structopt(long)]
     exit_upon_crash: Option<bool>,
+    #[structopt(long)]
     n_iterations: Option<u64>,
+    #[structopt(short, long)]
     quiet: bool,
 }
 
@@ -205,13 +230,12 @@ fn find_crate_root() -> Result<PathBuf> {
     Ok(path.to_path_buf())
 }
 
-fn debugger_command(target: &str, triple: &str) -> Command {
-    let debugger = env::var("HFUZZ_DEBUGGER").unwrap_or_else(|_| "rust-lldb".into());
+fn debugger_command(binary: &str, triple: &str, debugger: &str) -> Command {
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
 
     let mut cmd = Command::new(&debugger);
 
-    let dest = format!("{}/{}/debug/{}", &honggfuzz_target, triple, target);
+    let dest = format!("{}/{}/debug/{}", &honggfuzz_target, triple, binary);
     match Path::new(&debugger)
         .file_name()
         .map(|f| f.to_string_lossy().contains("lldb"))
@@ -227,17 +251,11 @@ fn debugger_command(target: &str, triple: &str) -> Command {
     cmd
 }
 
-fn hfuzz_version() {
-    println!("cargo-hfuzz {}", VERSION);
-}
-
-fn hfuzz_run(launch: HonggfuzzLaunchArgs, binary: impl ToString, args: impl IntoIterator<Item = impl ToString>, crate_root: &Path, build_type: BuildType) -> Result<()> {
+fn hfuzz_run(launch: HonggfuzzLaunchArgs, binary: &str, args: impl IntoIterator<Item = impl ToString>, crate_root: &Path, build_type: BuildType) -> Result<()> {
 
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
     let honggfuzz_workspace = env::var("HFUZZ_WORKSPACE").unwrap_or_else(|_| HONGGFUZZ_WORKSPACE.into());
     let honggfuzz_input = env::var("HFUZZ_INPUT").unwrap_or_else(|_| format!("{}/{}/input", honggfuzz_workspace, binary.to_string()));
-
-    hfuzz_build(binary.to_string(), &[], crate_root, build_type)?;
 
     let triple = target_triple()?;
 
@@ -283,9 +301,9 @@ fn hfuzz_run(launch: HonggfuzzLaunchArgs, binary: impl ToString, args: impl Into
     if launch.quiet {
         arguments.push("--quiet".to_owned());
     }
-    if verbose > 0 {
-        arguments.push("--verbose".to_owned());
-    }
+    // if launch.verbose > 0 {
+    //     arguments.push("--verbose".to_owned());
+    // }
     if let Some(exitcode) = launch.exit_upon_crash {
         arguments.push("--exit_upon_crash".to_owned());
         arguments.push("--exit_code_upon_crash".to_owned());
@@ -303,7 +321,11 @@ fn hfuzz_run(launch: HonggfuzzLaunchArgs, binary: impl ToString, args: impl Into
     anyhow::bail!("Failed to execute {} \"cargo hfuzz build\" from fuzzed project directory", &command)
 }
 
-fn hfuzz_build(binary: impl ToString, args: impl IntoIterator<Item = impl ToString>, crate_root: &Path, build_type: BuildType) -> Result<()> {
+fn hfuzz_build(
+    binary: &str,
+    extra_rustflags: &str,
+    args: impl IntoIterator<Item = impl ToString>,
+    crate_root: &Path, build_type: BuildType) -> Result<()> {
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
 
     let mut rustflags = "\
@@ -369,7 +391,7 @@ fn hfuzz_build(binary: impl ToString, args: impl IntoIterator<Item = impl ToStri
     }
 
     // add user provided flags
-    rustflags.push_str(&env::var("RUSTFLAGS").unwrap_or_default());
+    rustflags.push_str(extra_rustflags);
 
     // get user-defined args for building
     let hfuzz_build_args = env::var("HFUZZ_BUILD_ARGS").unwrap_or_default();
@@ -381,7 +403,13 @@ fn hfuzz_build(binary: impl ToString, args: impl IntoIterator<Item = impl ToStri
     let cargo_bin = env::var("CARGO").unwrap();
     let mut command = Command::new(&cargo_bin);
     // HACK to avoid building build scripts with rustflags
-    let mut arguments = vec!["build".to_owned(), "--bin".to_owned(), binary.to_string(), "--target".to_owned(), target_triple()?];
+    let mut arguments = vec![
+        "build".to_owned(),
+        "--bin".to_owned(),
+        binary.to_string(),
+        "--target".to_owned(),
+        target_triple()?
+    ];
     arguments.extend(hfuzz_build_args.map(|x| x.to_string()));
     arguments.extend(args.into_iter().map(|x| x.to_string()));
 
