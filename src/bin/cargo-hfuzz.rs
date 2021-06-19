@@ -117,9 +117,11 @@ impl SubCommand {
     pub fn launch(self, crate_root: impl AsRef<Path>) -> Result<()> {
         let crate_root = crate_root.as_ref();
         let target_triple = target_triple()?;
+        let target_dir = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
+
         match self {
             Self::Clean { args }  => {
-                hfuzz_clean( args )?;
+                hfuzz_clean( args, &target_dir )?;
             }
             Self::Minimize => {
                 // https://github.com/rust-fuzz/honggfuzz-rs/issues/26
@@ -144,22 +146,25 @@ impl SubCommand {
                 let build_args = (&mut args).take_while(|arg| arg != "--").collect::<Vec<_>>();
                 let target_args = args.collect::<Vec<_>>();
                 let rustflags = common.rustflags.as_ref().map(|x| x.as_ref()).unwrap_or_default();
-                hfuzz_build(&binary, rustflags, build_args, &crate_root, build_type)?;
+                let workspace = common.workspace;
+                hfuzz_build(&binary, rustflags, build_args, &crate_root, build_type, &workspace, &target_dir)?;
                 if common.only_build {
                     return Ok(())
                 }
-                hfuzz_run(launch, &binary, target_args, &crate_root, build_type)?;
+                hfuzz_run(launch, &target_triple, &binary, target_args, &crate_root, build_type, &workspace, &target_dir)?;
             }
             Self::Debug { common, binary, target_args, crash_file, debugger } => {
                 let build_type = BuildType::Debug;
 
                 let rustflags = common.rustflags.as_ref().map(|x| x.as_ref()).unwrap_or_default();
-                hfuzz_build(&binary, rustflags, common.build_args, &crate_root, build_type);
+                let workspace = common.workspace;
+
+                hfuzz_build(&binary, rustflags, common.build_args, &crate_root, build_type, &workspace, &target_dir);
 
                 if common.only_build {
                     return Ok(())
                 }
-                let status = debugger_command(&binary.to_string(), &target_triple, &debugger)
+                let status = debugger_command(&binary.to_string(), &target_dir, &target_triple, &debugger)
                     .args(target_args)
                     .env("CARGO_HONGGFUZZ_CRASH_FILENAME", crash_file)
                     .env("RUST_BACKTRACE", env::var("RUST_BACKTRACE").unwrap_or_else(|_| "1".into()))
@@ -230,12 +235,12 @@ fn find_crate_root() -> Result<PathBuf> {
     Ok(path.to_path_buf())
 }
 
-fn debugger_command(binary: &str, triple: &str, debugger: &str) -> Command {
+fn debugger_command(binary: &str, target_dir: &str, target_triple: &str, debugger: &str) -> Command {
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
 
     let mut cmd = Command::new(&debugger);
 
-    let dest = format!("{}/{}/debug/{}", &honggfuzz_target, triple, binary);
+    let dest = format!("{}/{}/debug/{}", &target_dir, target_triple, binary);
     match Path::new(&debugger)
         .file_name()
         .map(|f| f.to_string_lossy().contains("lldb"))
@@ -251,13 +256,20 @@ fn debugger_command(binary: &str, triple: &str, debugger: &str) -> Command {
     cmd
 }
 
-fn hfuzz_run(launch: HonggfuzzLaunchArgs, binary: &str, args: impl IntoIterator<Item = impl ToString>, crate_root: &Path, build_type: BuildType) -> Result<()> {
 
-    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
-    let honggfuzz_workspace = env::var("HFUZZ_WORKSPACE").unwrap_or_else(|_| HONGGFUZZ_WORKSPACE.into());
-    let honggfuzz_input = env::var("HFUZZ_INPUT").unwrap_or_else(|_| format!("{}/{}/input", honggfuzz_workspace, binary.to_string()));
 
-    let triple = target_triple()?;
+fn hfuzz_run(
+    launch: HonggfuzzLaunchArgs,
+    target_triple: &str,
+    binary: &str,
+    args: impl IntoIterator<Item = impl ToString>,
+    crate_root: &Path,
+    build_type: BuildType,
+    workspace: &str,
+    target_dir: &str,
+) -> Result<()> {
+
+    let honggfuzz_input = env::var("HFUZZ_INPUT").unwrap_or_else(|_| format!("{}/{}/input", workspace, binary.to_string()));
 
     // add some flags to sanitizers to make them work with Rust code
     let asan_options = env::var("ASAN_OPTIONS").unwrap_or_default();
@@ -273,13 +285,13 @@ fn hfuzz_run(launch: HonggfuzzLaunchArgs, binary: &str, args: impl IntoIterator<
     // FIXME: we split by whitespace without respecting escaping or quotes
     let hfuzz_run_args = hfuzz_run_args.split_whitespace();
 
-    fs::create_dir_all(&format!("{}/{}/input", &honggfuzz_workspace, binary.to_string()))?;
+    fs::create_dir_all(&format!("{}/{}/input", &workspace, binary.to_string()))?;
 
-    let command = format!("{}/honggfuzz", &honggfuzz_target);
+    let command = format!("{}/honggfuzz", &target_dir);
 
     let mut arguments: Vec<String> = vec![
         "-W".to_owned(),
-        format!("{}/{}", &honggfuzz_workspace, binary.to_string()),
+        format!("{}/{}", &workspace, binary.to_string()),
         "-f".to_owned(),
         honggfuzz_input.to_owned(),
         "-P".to_owned()
@@ -310,7 +322,7 @@ fn hfuzz_run(launch: HonggfuzzLaunchArgs, binary: &str, args: impl IntoIterator<
         arguments.push(exitcode.to_string());
     }
     arguments.extend(
-        ["--", &format!("{}/{}/release/{}", &honggfuzz_target, triple, binary.to_string())]
+        ["--", &format!("{}/{}/release/{}", &target_dir, target_triple, &binary)]
         .iter()
         .map(ToString::to_string));
 
@@ -325,8 +337,10 @@ fn hfuzz_build(
     binary: &str,
     extra_rustflags: &str,
     args: impl IntoIterator<Item = impl ToString>,
-    crate_root: &Path, build_type: BuildType) -> Result<()> {
-    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
+    crate_root: &Path,
+    build_type: BuildType,
+    workspace: &str,
+    target_dir: &str) -> Result<()> {
 
     let mut rustflags = "\
     --cfg fuzzing \
@@ -418,7 +432,7 @@ fn hfuzz_build(
     command
         .env("RUSTFLAGS", rustflags)
         .env("CARGO_INCREMENTAL", cargo_incremental)
-        .env("CARGO_TARGET_DIR", &honggfuzz_target) // change target_dir to not clash with regular builds
+        .env("CARGO_TARGET_DIR", &target_dir) // change target_dir to not clash with regular builds
         .env("CRATE_ROOT", &crate_root);
 
     // used by build.rs to check that versions are in sync
@@ -427,12 +441,12 @@ fn hfuzz_build(
     if build_type == BuildType::ProfileWithGrcov {
         command
             .env("CARGO_HONGGFUZZ_BUILD_VERSION", VERSION)
-            .env("CARGO_HONGGFUZZ_TARGET_DIR", &honggfuzz_target);
+            .env("CARGO_HONGGFUZZ_TARGET_DIR", &target_dir);
     }
     else if build_type != BuildType::Debug {
         command
             .env("CARGO_HONGGFUZZ_BUILD_VERSION", VERSION)
-            .env("CARGO_HONGGFUZZ_TARGET_DIR", &honggfuzz_target);
+            .env("CARGO_HONGGFUZZ_TARGET_DIR", &target_dir);
         arguments.push("--release".to_owned());
     }
 
@@ -443,13 +457,12 @@ fn hfuzz_build(
     Ok(())
 }
 
-fn hfuzz_clean(args: impl IntoIterator<Item = impl ToString>) -> Result<()> {
-    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
+fn hfuzz_clean(args: impl IntoIterator<Item = impl ToString>, target_dir: &str) -> Result<()> {
     let cargo_bin = env::var("CARGO").unwrap();
     let status = Command::new(cargo_bin)
         .args(&["clean"])
         .args(args.into_iter().map(|x| x.to_string()))
-        .env("CARGO_TARGET_DIR", &honggfuzz_target) // change target_dir to not clash with regular builds
+        .env("CARGO_TARGET_DIR", target_dir) // change target_dir to not clash with regular builds
         .status()?;
 
     if !status.success() {
