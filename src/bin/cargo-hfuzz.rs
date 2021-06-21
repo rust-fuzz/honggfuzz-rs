@@ -59,8 +59,8 @@ enum SubCommand {
         #[structopt(short, long, default_value = "input", env = "HFUZZ_INPUT")]
         input: String,
 
-        /// which binary to fuzz
-        #[structopt(short, long)]
+        /// which fuzzing target binary to fuzz
+        #[structopt(short="b", long="bin")]
         binary: String,
 
         /// do no build with compiler instrumentation
