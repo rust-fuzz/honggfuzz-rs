@@ -199,10 +199,13 @@ impl TimeoutDuration {
 struct HonggfuzzLaunchArgs {
     #[structopt(long)]
     timeout: Option<TimeoutDuration>,
+
     #[structopt(long)]
     exit_upon_crash: Option<bool>,
+
     #[structopt(long)]
     n_iterations: Option<u64>,
+
     #[structopt(short, long)]
     quiet: bool,
 }
@@ -219,6 +222,13 @@ enum BuildType {
 #[inline(always)]
 fn target_triple() -> Result<String> {
     Ok(rustc_version::version_meta()?.host)
+}
+
+
+fn cargo_bin() -> Result<String> {
+    Ok(env::var("CARGO").or_else::<anyhow::Error, _>(|_e| {
+        Ok(which::which("cargo").map(|p: PathBuf| ToString::to_string(&p.display()))?)
+    })?)
 }
 
 fn find_crate_root() -> Result<PathBuf> {
@@ -409,7 +419,7 @@ fn hfuzz_build(
     // FIXME: we split by whitespace without respecting escaping or quotes
     let hfuzz_build_args = hfuzz_build_args.split_whitespace();
 
-    let cargo_bin = env::var("CARGO").unwrap();
+    let cargo_bin = cargo_bin()?;
     let mut command = Command::new(&cargo_bin);
     // HACK to avoid building build scripts with rustflags
     let mut arguments = vec![
