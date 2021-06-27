@@ -7,16 +7,15 @@ use anyhow::Result;
 use std::time::Duration;
 use structopt::StructOpt;
 
-/// The version of `cargo-hfuzz` cli tooling.
+/// The version of `cargo-hongg` cli tooling.
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const HONGGFUZZ_TARGET: &str = "hfuzz_target";
-const HONGGFUZZ_WORKSPACE: &str = "hfuzz_workspace";
 
 #[cfg(target_family="windows")]
 compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "cargo-hfuzz", about = "Fuzz your Rust code with Google-developed Honggfuzz !")]
+#[structopt(name = "cargo-hongg", about = "Fuzz your Rust code with Google-developed Honggfuzz !")]
 struct Opt {
     #[structopt(subcommand)]
     command: SubCommand,
@@ -56,8 +55,8 @@ enum SubCommand {
         common: CommonOpts,
 
         /// path to fuzzer's input files (aka "corpus"), relative to `$HFUZZ_WORKSPACE/{TARGET}`
-        #[structopt(short, long, default_value = "input", env = "HFUZZ_INPUT")]
-        input: String,
+        #[structopt(short, long, env = "HFUZZ_INPUT")]
+        input: Option<String>,
 
         /// which fuzzing target binary to fuzz
         #[structopt(short="b", long="bin")]
@@ -147,19 +146,20 @@ impl SubCommand {
                 let target_args = args.collect::<Vec<_>>();
                 let rustflags = common.rustflags.as_ref().map(|x| x.as_ref()).unwrap_or_default();
                 let workspace = common.workspace;
-                hfuzz_build(&binary, rustflags, build_args, &crate_root, build_type, &workspace, &target_dir)?;
+                hfuzz_build(&binary, rustflags, build_args, &crate_root, build_type, &target_dir)?;
                 if common.only_build {
                     return Ok(())
                 }
-                hfuzz_run(launch, &target_triple, &binary, target_args, &crate_root, build_type, &workspace, &target_dir)?;
+                let input = input.unwrap_or_else(|| format!("{}/{}/input", workspace, binary.to_string()));
+
+                hfuzz_run(launch, &target_triple, &binary, target_args, &input, &crate_root, build_type, &workspace, &target_dir)?;
             }
             Self::Debug { common, binary, target_args, crash_file, debugger } => {
                 let build_type = BuildType::Debug;
 
                 let rustflags = common.rustflags.as_ref().map(|x| x.as_ref()).unwrap_or_default();
-                let workspace = common.workspace;
 
-                hfuzz_build(&binary, rustflags, common.build_args, &crate_root, build_type, &workspace, &target_dir);
+                hfuzz_build(&binary, rustflags, common.build_args, &crate_root, build_type, &target_dir)?;
 
                 if common.only_build {
                     return Ok(())
@@ -236,8 +236,6 @@ fn find_crate_root() -> Result<PathBuf> {
 }
 
 fn debugger_command(binary: &str, target_dir: &str, target_triple: &str, debugger: &str) -> Command {
-    let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
-
     let mut cmd = Command::new(&debugger);
 
     let dest = format!("{}/{}/debug/{}", &target_dir, target_triple, binary);
@@ -263,14 +261,12 @@ fn hfuzz_run(
     target_triple: &str,
     binary: &str,
     args: impl IntoIterator<Item = impl ToString>,
-    crate_root: &Path,
-    build_type: BuildType,
+    input: &str,
+    _crate_root: &Path,
+    _build_type: BuildType,
     workspace: &str,
     target_dir: &str,
 ) -> Result<()> {
-
-    let honggfuzz_input = env::var("HFUZZ_INPUT").unwrap_or_else(|_| format!("{}/{}/input", workspace, binary.to_string()));
-
     // add some flags to sanitizers to make them work with Rust code
     let asan_options = env::var("ASAN_OPTIONS").unwrap_or_default();
     let asan_options = "detect_odr_violation=0:".to_owned() + asan_options.as_str();
@@ -293,7 +289,7 @@ fn hfuzz_run(
         "-W".to_owned(),
         format!("{}/{}", &workspace, binary.to_string()),
         "-f".to_owned(),
-        honggfuzz_input.to_owned(),
+        input.to_owned(),
         "-P".to_owned()
     ];
     arguments.extend(hfuzz_run_args.map(|x| x.to_string()));
@@ -339,7 +335,6 @@ fn hfuzz_build(
     args: impl IntoIterator<Item = impl ToString>,
     crate_root: &Path,
     build_type: BuildType,
-    workspace: &str,
     target_dir: &str) -> Result<()> {
 
     let mut rustflags = "\
