@@ -1,5 +1,5 @@
 [workspace]
-members = ["honggfuzz-rs", "cargo-hongg"]
+members = ["hongg", "cargo-hongg"]
 
 
 exclude = [
