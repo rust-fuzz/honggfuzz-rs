@@ -44,6 +44,9 @@ struct CommonOpts {
     /// path to working directory
     #[structopt(short, long, default_value = "hfuzz_workspace", env = "HFUZZ_WORKSPACE")]
     workspace: String,
+
+    #[structopt(flatten)]
+    verbosity: clap_verbosity_flag::Verbosity,
 }
 
 #[derive(Debug, StructOpt)]
@@ -201,13 +204,13 @@ struct HonggfuzzLaunchArgs {
     timeout: Option<TimeoutDuration>,
 
     #[structopt(long)]
-    exit_upon_crash: Option<bool>,
+    exit_upon_crash: Option<u32>,
 
     #[structopt(long)]
     n_iterations: Option<u64>,
 
-    #[structopt(short, long)]
-    quiet: bool,
+    #[structopt(long)]
+    quietly: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -316,8 +319,8 @@ fn hfuzz_run(
     if let Some(n) = launch.n_iterations {
         arguments.extend(vec!["-N".to_owned(), n.to_string()]);
     }
-    if launch.quiet {
-        arguments.push("--quiet".to_owned());
+    if launch.quietly {
+        arguments.push("--quietly".to_owned());
     }
     // if launch.verbose > 0 {
     //     arguments.push("--verbose".to_owned());
@@ -501,49 +504,50 @@ mod tests {
 
     #[test]
     fn args() {
-        fn check(cl: &'static str) -> Args {
-            let args = Args::parse(
+        fn check(cl: &'static str) -> Opt {
+            let args = Opt::from_iter(
                 cl.split_ascii_whitespace()
-            ).expect("Must parse. qed ");
+            );
             args
         }
 
 
         assert_matches!(
-            check("cargo hongg run -vvv some-binary --exit-upon-crash=77 -- fff --xyz"),
-            Args {
-                cmd_run,
-                flag_verbose,
-                arg_target,
-                flag_exit_upon_crash,
-                arg_sub,
+            check("cargo-hongg fuzz -vv --quietly --bin some-binary --exit-upon-crash=77 -- fff --xyz"),
+            Opt {
+                command: SubCommand::Fuzz {
+
+                    common,
+                    binary,
+                    launch,
+                    args,
+                    ..
+                },
                 ..
             } => {
-                assert!(cmd_run);
-                assert_eq!(flag_verbose, 3);
-                assert_eq!(arg_target, Some("some-binary".to_owned()));
-                assert_eq!(flag_exit_upon_crash, Some(77));
-                assert_eq!(arg_sub.as_slice(), &["fff", "--xyz"]);
+                assert_eq!(binary, "some-binary".to_owned());
+                assert_matches!(common.verbosity.log_level(), Some(log::Level::Info));
+                assert_eq!(launch.exit_upon_crash, Some(77));
+                assert_eq!(launch.quietly, true);
+
+                assert_eq!(args.as_slice(), &["fff", "--xyz"]);
             });
 
 
         assert_matches!(
-            check("cargo hongg run -q foo --exit-upon-crash=0 -- --xyz"),
-            Args {
-                cmd_run,
-                flag_verbose,
-                flag_quiet,
-                arg_target,
-                flag_exit_upon_crash,
-                arg_sub,
+            check("cargo-hongg fuzz -vvvv --bin gameover --quietly --exit-upon-crash=0 -- --xyz"),
+            Opt {
+                command: SubCommand::Fuzz {
+                    common,
+                    launch,
+                    args,
+                    ..
+                },
                 ..
             } => {
-                assert!(cmd_run);
-                assert_eq!(flag_verbose, 0);
-                assert!(flag_quiet);
-                assert_eq!(arg_target, Some("foo".to_owned()));
-                assert_eq!(flag_exit_upon_crash, Some(0));
-                assert_eq!(arg_sub.as_slice(), ["--xyz"]);
+                assert_matches!(common.verbosity.log_level(), Some(log::Level::Trace));
+                assert_eq!(launch.exit_upon_crash, Some(0));
+                assert_eq!(args.as_slice(), &["--xyz"]);
             });
     }
 }
