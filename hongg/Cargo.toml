@@ -1,5 +1,5 @@
 [package]
-name = "honggfuzz"
+name = "hongg"
 version = "0.5.54"
 edition = "2018"
 authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
@@ -13,6 +13,7 @@ categories = ["command-line-utilities", "development-tools::testing", "developme
 description = """
 Fuzz your Rust code with Google-developped Honggfuzz !
 """
+publish = false
 
 
 [dependencies]
