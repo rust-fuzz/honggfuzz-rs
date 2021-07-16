@@ -510,7 +510,7 @@ mod tests {
 
 
         assert_matches!(
-            check("cargo hfuzz run -vvv some-binary --exit-upon-crash=77 -- fff --xyz"),
+            check("cargo hongg run -vvv some-binary --exit-upon-crash=77 -- fff --xyz"),
             Args {
                 cmd_run,
                 flag_verbose,
@@ -528,7 +528,7 @@ mod tests {
 
 
         assert_matches!(
-            check("cargo hfuzz run -q foo --exit-upon-crash=0 -- --xyz"),
+            check("cargo hongg run -q foo --exit-upon-crash=0 -- --xyz"),
             Args {
                 cmd_run,
                 flag_verbose,

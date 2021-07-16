@@ -1,0 +1,32 @@
+[package]
+name = "honggfuzz"
+version = "0.5.54"
+edition = "2018"
+authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
+license = "MIT/Apache-2.0/Unlicense/WTFPL"
+repository = "https://github.com/rust-fuzz/honggfuzz-rs"
+documentation = "https://docs.rs/honggfuzz"
+homepage = "https://github.com/rust-fuzz/honggfuzz-rs/blob/master/README.md"
+readme = "README.md"
+keywords = ["fuzzer", "fuzzing", "testing", "security", "property"]
+categories = ["command-line-utilities", "development-tools::testing", "development-tools::cargo-plugins", "development-tools::debugging"]
+description = """
+Fuzz your Rust code with Google-developped Honggfuzz !
+"""
+
+
+[dependencies]
+arbitrary = "1.0"
+log = "0.4"
+
+[dev-dependencies]
+rand = "0.8"
+rand_chacha = "0.3"
+assert_matches = "1"
+
+[target.'cfg(fuzzing)'.dependencies]
+lazy_static = "1.4"
+fs-err = "2.6"
+
+[target.'cfg(fuzzing_debug)'.dependencies]
+memmap = "0.7"

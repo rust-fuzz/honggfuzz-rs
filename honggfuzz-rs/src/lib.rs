@@ -239,9 +239,9 @@ extern "C" {
 #[cfg(not(fuzzing))]
 #[allow(unused_variables)]
 pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
-    eprintln!("This executable hasn't been built with \"cargo hfuzz\".");
-    eprintln!("Try executing \"cargo hfuzz build\" and check out \"hfuzz_target\" directory.");
-    eprintln!("Or execute \"cargo hfuzz run TARGET\"");
+    eprintln!("This executable hasn't been built with \"cargo hongg\".");
+    eprintln!("Try executing \"cargo hongg build\" and check out \"hfuzz_target\" directory.");
+    eprintln!("Or execute \"cargo cargo run --help\"");
     std::process::exit(17);
 }
 
@@ -295,7 +295,7 @@ pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
 #[cfg(all(fuzzing, fuzzing_debug))]
 pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
     use std::env;
-    use std::fs::File;
+    use fs_err::File;
     use memmap::MmapOptions;
 
     let filename = env::var("CARGO_HONGGFUZZ_CRASH_FILENAME").unwrap_or_else(|_|{

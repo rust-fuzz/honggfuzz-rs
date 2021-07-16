@@ -14,4 +14,4 @@ name = "arbitrary-example"
 path = "src/arbitrary_main.rs"
 
 [dependencies]
-honggfuzz = {path = ".."}
+honggfuzz = { path = ".." }

@@ -1,0 +1,30 @@
+[package]
+name = "cargo-hongg"
+version = "0.54.4"
+authors = ["Bernhard Schuster <bernhard@ahoi.io>", "Paul Grandperrin <paul.grandperrin@gmail.com>"]
+edition = "2018"
+repository = "https://github.com/drahnr/honggfuzz-rs"
+documentation = "https://docs.rs/cargo-hongg"
+homepage = "https://github.com/drahnr/honggfuzz-rs/blob/master/README.md"
+readme = "README.md"
+keywords = ["fuzzer", "fuzzing", "testing", "security", "property"]
+categories = ["command-line-utilities", "development-tools::testing", "development-tools::cargo-plugins", "development-tools::debugging"]
+description = """
+Fuzz your Rust code with Google-developped Honggfuzz! Alt implementation of `cargo-hfuzz`.
+"""
+
+[dependencies]
+arbitrary = "1.0"
+rustc_version = "0.4"
+structopt = "0.3"
+serde = "1.0"
+anyhow = "1.0"
+fs-err = "2.5"
+which = "4.1"
+log = "0.4"
+pretty_env_logger = "0.4"
+
+[dev-dependencies]
+rand = "0.8"
+rand_chacha = "0.3"
+assert_matches = "1"
