@@ -1,19 +1,19 @@
 # honggfuzz-rs [![Build Status][build-img]][build] [![Crates.io][crates-img]][crates] [![Documentation][docs-img]][docs]
 
-[build-img]:   https://github.com/rust-fuzz/honggfuzz-rs/actions/workflows/rust.yml/badge.svg
-[build]:       https://github.com/rust-fuzz/honggfuzz-rs/actions/workflows/rust.yml
-[crates-img]:   https://img.shields.io/crates/v/honggfuzz.svg
-[crates]:       https://crates.io/crates/honggfuzz
-[docs-img]:     https://docs.rs/honggfuzz/badge.svg
-[docs]:         https://docs.rs/honggfuzz
+[build-img]:   https://github.com/drahnr/hongg-rs/actions/workflows/rust.yml/badge.svg
+[build]:       https://github.com/drahnr/hongg-rs/actions/workflows/rust.yml
+[crates-img]:   https://img.shields.io/crates/v/hongg.svg
+[crates]:       https://crates.io/crates/hongg
+[docs-img]:     https://docs.rs/hongg/badge.svg
+[docs]:         https://docs.rs/hongg
 
 Fuzz your Rust code with Google-developed Honggfuzz !
 
-## [Documentation](https://docs.rs/honggfuzz)
+## [Documentation](https://docs.rs/hongg)
 
 [![asciicast](https://asciinema.org/a/43MLo5Xl8ukHxgwDLArKqS9xc.png)](https://asciinema.org/a/43MLo5Xl8ukHxgwDLArKqS9xc)
 
-## About Honggfuzz
+## About Hongg
 
 Honggfuzz is a security oriented fuzzer with powerful analysis options. Supports evolutionary, feedback-driven fuzzing based on code coverage (software- and hardware-based).
 
@@ -51,21 +51,21 @@ sudo apt install build-essential binutils-dev libunwind-dev libblocksruntime-dev
 Install honggfuzz commands to build with instrumentation and fuzz
 
 ```sh
-# installs hfuzz and honggfuzz subcommands in cargo
-cargo install honggfuzz
+# installs hongg and honggfuzz subcommands in cargo
+cargo install cargo-hongg
 ```
 
 Add to your dependencies
 
 ```toml
 [dependencies]
-honggfuzz = "0.5"
+hongg = "0.5.54"
 ```
 
 Create a target to fuzz
 
 ```rust
-use honggfuzz::fuzz;
+use hongg::fuzz;
 
 fn main() {
     // Here you can parse `std::env::args and
@@ -95,14 +95,14 @@ Fuzz for fun and profit !
 
 ```sh
 # builds with fuzzing instrumentation and then fuzz the "example" target
-cargo hfuzz run example
+cargo hongg fuzz --bin example
 ```
 
 Once you got a crash, replay it easily in a debug environment
 
 ```sh
 # builds the target in debug mode and replays automatically the crash in rust-lldb
-cargo hfuzz run-debug example hfuzz_workspace/*/*.fuzz
+cargo hongg debug --bin example hfuzz_workspace/*/*.fuzz
 ```
 
 You can also build and run your project without compile-time software instrumentation (LLVM's SanCov passes)
@@ -118,13 +118,13 @@ Clean
 
 ```sh
 # a wrapper on "cargo clean" which cleans the fuzzing_target directory
-cargo hfuzz clean
+cargo hongg clean
 ```
 
 Version
 
 ```sh
-cargo hfuzz version
+cargo hongg --version
 ```
 
 ### Environment variables
@@ -137,7 +137,7 @@ For instance, you can enable the use of LLVM's [sanitizers](https://github.com/j
 This is a recommended option if you want to test your `unsafe` rust code but it will have an impact on performance.
 
 ```sh
-RUSTFLAGS="-Z sanitizer=address" cargo hfuzz run example
+RUSTFLAGS="-Z sanitizer=address" cargo hongg fuzz -b example
 ```
 
 #### `HFUZZ_BUILD_ARGS`
@@ -146,7 +146,7 @@ You can use `HFUZZ_BUILD_ARGS` to send additional arguments to `cargo build`.
 
 #### `HFUZZ_RUN_ARGS`
 
-You can use `HFUZZ_RUN_ARGS` to send additional arguments to `honggfuzz`.
+You can use `HFUZZ_RUN_ARGS` to send additional arguments to `hongg fuzz`.
 See [USAGE](https://github.com/google/honggfuzz/blob/master/docs/USAGE.md) for the list of those.
 
 For example:
