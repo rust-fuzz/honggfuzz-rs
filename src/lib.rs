@@ -206,6 +206,7 @@
 //! This crate was inspired by those projects!
 
 /// Re-export of arbitrary crate used to generate structured inputs
+#[cfg(feature = "arbitrary")]
 pub use arbitrary;
 
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
@@ -320,6 +321,28 @@ pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
     std::process::exit(2);
 }
 
+#[cfg(feature = "arbitrary")]
+#[macro_export]
+#[doc(hidden)]
+macro_rules! _arbitrary_fuzz {
+    (|$buf:ident: $dty:ty| $body:block) => {
+        $crate::fuzz(|$buf| {
+            let $buf: $dty = {
+                use $crate::arbitrary::{Arbitrary, Unstructured};
+
+                let mut buf = Unstructured::new($buf);
+                if let Ok(buf) = Arbitrary::arbitrary(&mut buf) {
+                    buf
+                } else {
+                    return
+                }
+            };
+
+            $body
+        });
+    };
+}
+
 /// Fuzz a closure-like block of code by passing it an object of arbitrary type.
 ///
 /// You can choose the type of the argument using the syntax as in the example below.
@@ -353,20 +376,7 @@ macro_rules! fuzz {
         $crate::fuzz(|$buf| $body);
     };
     (|$buf:ident: $dty:ty| $body:block) => {
-        $crate::fuzz(|$buf| {
-            let $buf: $dty = {
-                use $crate::arbitrary::{Arbitrary, Unstructured};
-
-                let mut buf = Unstructured::new($buf); 
-                if let Ok(buf) = Arbitrary::arbitrary(&mut buf) {
-                    buf
-                } else {
-                    return
-                }
-            };
-
-            $body
-        });
+        $crate::_arbitrary_fuzz!(|$buf: $dty| $body);
     };
 }
 
