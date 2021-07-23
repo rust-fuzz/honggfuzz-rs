@@ -7,17 +7,26 @@ cargo uninstall honggfuzz 2>/dev/null || true
 cargo clean
 cargo update
 
-# install cargo subcommands
-cargo install --path . --force --verbose
+# install cargo subcommands, unsetting the arbitrary feature for 1.47
+version=`rustc --version`
+if [ -n "${version##*1.47*}" ] ;then
+	cargo install --path . --force --verbose
+else
+	cargo install --path . --force --verbose --no-default-features
+fi
 cargo hfuzz version
 
 cd example
 
-# run test.sh without sanitizers
-RUSTFLAGS="" ./test.sh
+if [ -n "${version##*1.47*}" ] ;then
+	# run test.sh without sanitizers with the `arbitrary` crate
+	HFUZZ_BUILD_ARGS="--features arbitrary" ./test.sh
+fi
+
+# run test.sh without sanitizers without the `arbitrary` crate
+HFUZZ_BUILD_ARGS="--no-default-features" RUSTFLAGS="" ./test.sh
 
 # run test.sh with sanitizers only on nightly
-version=`rustc --version`
 if [ -z "${version##*nightly*}" ] ;then
 	if [ "`uname`" = "Linux" ] ;then
 		RUSTFLAGS="-Z sanitizer=address" ./test.sh # not working on macos
@@ -30,10 +39,17 @@ fi
 # go back to root crate
 cd ..
 
-# try to generate doc
-cargo doc
+if [ -n "${version##*1.47*}" ] ;then
+	# try to generate doc
+	cargo doc
 
-# run unit tests
-cargo test
+	# run unit tests
+	cargo test
+else
+	cargo doc --no-default-features
+
+	# run unit tests
+	cargo test --no-default-features
+fi
 
 cargo clean

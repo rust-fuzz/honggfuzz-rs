@@ -5,13 +5,12 @@ edition = "2018"
 authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
 default-run = "example"
 
+[features]
+arbitrary = ["honggfuzz/arbitrary"]
+
 [[bin]]
 name = "example"
 path = "src/main.rs"
 
-[[bin]]
-name = "arbitrary-example"
-path = "src/arbitrary_main.rs"
-
 [dependencies]
-honggfuzz = {path = ".."}
+honggfuzz = {path = "..", default-features = false}

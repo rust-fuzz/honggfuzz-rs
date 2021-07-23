@@ -51,7 +51,21 @@ jobs:
       run: sudo apt-get install --no-install-recommends binutils-dev libunwind8-dev
     - name: Test
       run: ./test.sh
-        
+
+  ubuntu-msrv:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: 1.47.0
+        override: true
+    - name: Install Deps
+      run: sudo apt-get install --no-install-recommends binutils-dev libunwind8-dev
+    - name: Test
+      run: ./test.sh
+
 #  macos-nightly:
 #    runs-on: macos-10.15 # macos-11 is not yet supported by upstream honggfuzz
 #    steps:
