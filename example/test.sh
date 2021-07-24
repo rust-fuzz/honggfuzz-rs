@@ -24,7 +24,7 @@ mkdir -p $workspace/input
 
 # fuzz exemple
 cd subdirectory
-HFUZZ_RUN_ARGS="-v -N 10000000 --run_time 120 --exit_upon_crash" cargo hfuzz run example
+HFUZZ_RUN_ARGS="-v -N 10000000 --run_time 120 -F3 --exit_upon_crash" cargo hfuzz run example
 cd ..
 
 # build example without instrumentation
