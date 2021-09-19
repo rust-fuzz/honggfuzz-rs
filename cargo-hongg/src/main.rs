@@ -29,6 +29,7 @@ impl Opt {
         self.command.verbosity()
     }
 }
+
 /// Shared options for multiple sub-commands.
 #[derive(Debug, StructOpt)]
 struct CommonOpts {
@@ -178,7 +179,7 @@ fn launch_honggfuzz(
 
     let mut args = args.into_iter();
     let build_args = (&mut args)
-        .take_while(|arg| arg.to_string().as_str() != "--")
+        .take_while(|arg| arg.to_string() != "--")
         .collect::<Vec<_>>();
     let target_args = args.collect::<Vec<_>>();
     hongg_build(
@@ -666,7 +667,13 @@ fn hongg_clean(args: impl IntoIterator<Item = impl ToString>, target_dir: &str) 
 }
 
 fn main() -> Result<()> {
-    let opt = Opt::from_args();
+    let mut args = std::env::args().peekable();
+    let exe = args.next();
+    if args.peek().filter(|&x| dbg!(x).ends_with("hongg")).is_some() {
+        let _ = args.next();
+    }
+
+    let opt = Opt::from_iter(exe.into_iter().map(|x| x.to_owned()).chain(args));
     pretty_env_logger::formatted_timed_builder()
         .filter_level(opt.verbosity())
         .init();
