@@ -1,7 +1,7 @@
 use honggfuzz::fuzz;
 
 fn main() {
-    // Here you can parse `std::env::args and 
+    // Here you can parse `std::env::args and
     // setup / initialize your project
 
     // You should avoid as much as possible global states.
@@ -26,7 +26,7 @@ fn main() {
             if data[1] != b'e' {return}
             if data[2] != b'y' {return}
             panic!("BOOM")
-            
+
         });
     }
 }

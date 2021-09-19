@@ -3,15 +3,26 @@ use std::path::PathBuf;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[cfg(target_family="windows")]
+#[cfg(target_family = "windows")]
 compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
 
 // TODO: maybe use `make-cmd` crate
-#[cfg(not(any(target_os = "freebsd", target_os = "dragonfly", target_os = "bitrig", target_os = "openbsd", target_os = "netbsd")))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "dragonfly",
+    target_os = "bitrig",
+    target_os = "openbsd",
+    target_os = "netbsd"
+)))]
 const GNU_MAKE: &str = "make";
-#[cfg(any(target_os = "freebsd", target_os = "dragonfly", target_os = "bitrig", target_os = "openbsd", target_os = "netbsd"))]
+#[cfg(any(
+    target_os = "freebsd",
+    target_os = "dragonfly",
+    target_os = "bitrig",
+    target_os = "openbsd",
+    target_os = "netbsd"
+))]
 const GNU_MAKE: &str = "gmake";
-
 
 #[track_caller]
 fn run_cmd(cmd: impl std::convert::AsRef<str>) {
@@ -23,7 +34,12 @@ fn run_cmd(cmd: impl std::convert::AsRef<str>) {
         .status()
         .expect(format!("Failed to spawn process \"{}\"", &full).as_str());
 
-    assert!(status.success(), "Command failed ({:?}): \"{}\"", &status, &full);
+    assert!(
+        status.success(),
+        "Command failed ({:?}): \"{}\"",
+        &status,
+        &full
+    );
 }
 
 macro_rules! run_cmd {
@@ -52,9 +68,9 @@ fn main() {
         PathBuf::from(crate_root).join(honggfuzz_target)
     };
 
-
     // check that "cargo hongg" command is at the same version as this file
-    let honggfuzz_build_version = env::var("CARGO_HONGGFUZZ_BUILD_VERSION").unwrap_or("unknown".to_string());
+    let honggfuzz_build_version =
+        env::var("CARGO_HONGGFUZZ_BUILD_VERSION").unwrap_or("unknown".to_string());
     if VERSION != honggfuzz_build_version {
         eprintln!("The version of the honggfuzz library dependency ({0}) and the version of the `cargo-hfuzz` executable ({1}) do not match.\n\
                    If updating both by running `cargo update` and `cargo install honggfuzz` does not work, you can either:\n\
@@ -69,7 +85,10 @@ fn main() {
     // TODO: maybe it's not a good idea to always clean the sources..
 
     // build honggfuzz command and hfuzz static library
-    run_cmd!("{} -C honggfuzz honggfuzz libhfuzz/libhfuzz.a libhfcommon/libhfcommon.a", GNU_MAKE);
+    run_cmd!(
+        "{} -C honggfuzz honggfuzz libhfuzz/libhfuzz.a libhfcommon/libhfcommon.a",
+        GNU_MAKE
+    );
 
     // copy hfuzz static library to output directory
     run_cmd!("cp honggfuzz/libhfuzz/libhfuzz.a {}", &out_dir);

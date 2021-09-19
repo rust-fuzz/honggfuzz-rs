@@ -210,7 +210,7 @@ pub use arbitrary;
 
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
 extern "C" {
-    fn HF_ITER(buf_ptr: *mut *const u8, len_ptr: *mut usize );
+    fn HF_ITER(buf_ptr: *mut *const u8, len_ptr: *mut usize);
 }
 
 /// Fuzz a closure by passing it a `&[u8]`
@@ -238,7 +238,10 @@ extern "C" {
 /// ```
 #[cfg(not(fuzzing))]
 #[allow(unused_variables)]
-pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
+pub fn fuzz<F>(closure: F)
+where
+    F: FnOnce(&[u8]),
+{
     eprintln!("This executable hasn't been built with \"cargo hongg\".");
     eprintln!("Try executing \"cargo hongg build\" and check out \"hfuzz_target\" directory.");
     eprintln!("Or execute \"cargo cargo run --help\"");
@@ -258,7 +261,10 @@ lazy_static::lazy_static! {
 }
 
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
-pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
+pub fn fuzz<F>(closure: F)
+where
+    F: FnOnce(&[u8]),
+{
     use std::mem::MaybeUninit;
 
     // sets panic hook if not already done
@@ -283,7 +289,8 @@ pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
     // [`std::panic::UnwindSafe`] trait.
     let did_panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         closure(buf);
-    })).is_err();
+    }))
+    .is_err();
 
     if did_panic {
         // hopefully the custom panic hook will be called before and abort the
@@ -293,22 +300,25 @@ pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
 }
 
 #[cfg(all(fuzzing, fuzzing_debug))]
-pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
-    use std::env;
+pub fn fuzz<F>(closure: F)
+where
+    F: FnOnce(&[u8]),
+{
     use fs_err::File;
     use memmap::MmapOptions;
+    use std::env;
 
     let filename = env::var("CARGO_HONGGFUZZ_CRASH_FILENAME").unwrap_or_else(|_|{
         eprintln!("error: Environment variable CARGO_HONGGFUZZ_CRASH_FILENAME not set. Try launching with \"cargo hfuzz run-debug TARGET CRASH_FILENAME [ ARGS ... ]\"");
         std::process::exit(1);
     });
 
-    let file = File::open(&filename).unwrap_or_else(|_|{
+    let file = File::open(&filename).unwrap_or_else(|_| {
         eprintln!("error: failed to open \"{}\"", &filename);
         std::process::exit(1);
     });
 
-    let mmap = unsafe {MmapOptions::new().map(&file)}.unwrap_or_else(|_|{
+    let mmap = unsafe { MmapOptions::new().map(&file) }.unwrap_or_else(|_| {
         eprintln!("error: failed to mmap file \"{}\"", &filename);
         std::process::exit(1);
     });
@@ -361,7 +371,7 @@ macro_rules! fuzz {
                 if let Ok(buf) = Arbitrary::arbitrary(&mut buf) {
                     buf
                 } else {
-                    return
+                    return;
                 }
             };
 
