@@ -181,8 +181,20 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: s
             ");
 
             if *build_type == BuildType::ReleaseInstrumented {
+                // The fix for now is to pass `-C passes=sancov-module` only to compilers
+                // for which the LLVM version is >= 13.
+                let version_meta = rustc_version::version_meta().unwrap();
+                if version_meta.llvm_version.map_or(true, |v| v.major >= 13) {
+                    rustflags.push_str("\
+                    -C passes=sancov-module \
+                    ");
+                } else {
+                    rustflags.push_str("\
+                    -C passes=sancov \
+                    ");
+                };
+                
                 rustflags.push_str("\
-                -C passes=sancov-module \
                 -C llvm-args=-sanitizer-coverage-level=4 \
                 -C llvm-args=-sanitizer-coverage-trace-pc-guard \
                 -C llvm-args=-sanitizer-coverage-trace-divs \

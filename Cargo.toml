@@ -27,6 +27,7 @@ maintenance = { status = "actively-developed" }
 
 [dependencies]
 arbitrary = "1"
+rustc_version = "0.4"
 
 [dev-dependencies]
 rand = "0.8"
