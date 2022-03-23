@@ -145,6 +145,21 @@ where
             // FIXME: we split by whitespace without respecting escaping or quotes
             let hfuzz_run_args = hfuzz_run_args.split_whitespace();
 
+            // get user-defined args for building
+            let hfuzz_build_args = env::var("HFUZZ_BUILD_ARGS").unwrap_or_default();
+            // FIXME: we split by whitespace without respecting escaping or quotes
+            let hfuzz_build_args: Vec<_> = hfuzz_build_args.split_whitespace().collect();
+
+            let hfuzz_build_profile =
+                if let Some(arg) = hfuzz_build_args.iter().find(|f| &f[..9] == "--profile") {
+                    arg.split("=")
+                        .collect::<Vec<_>>()
+                        .get(1)
+                        .expect("--profile not in correct format (eg. --profile=<label>)")
+                } else {
+                    "release"
+                };
+
             fs::create_dir_all(&format!("{}/{}/input", &honggfuzz_workspace, target))
                 .unwrap_or_else(|_| {
                     println!(
@@ -166,9 +181,10 @@ where
                 .args(&[
                     "--",
                     &format!(
-                        "{}/{}/release/{}",
+                        "{}/{}/{}/{}",
                         &honggfuzz_target,
                         target_triple(),
+                        hfuzz_build_profile,
                         target
                     ),
                 ])
