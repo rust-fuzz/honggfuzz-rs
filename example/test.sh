@@ -24,7 +24,7 @@ workspace="hfuzz_workspace/example"
 rm -rf $workspace
 mkdir -p $workspace/input
 
-# fuzz exemple
+# fuzz example
 cd subdirectory
 HFUZZ_RUN_ARGS="-v -N 10000000 --run_time 120 --exit_upon_crash" $CARGO_HFUZZ run example
 cd ..
