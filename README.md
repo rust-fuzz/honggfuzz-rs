@@ -188,12 +188,12 @@ For instance:
   * Avoid potential undeterministic behavior from racing threads.
   * ...
 * Never ever call `std::process::exit()`.
-* Disable logging and other unnecessary functionnalities.
+* Disable logging and other unnecessary functionalities.
 * Try to avoid modifying global state when possible.
 * Do not set up your own panic hook when run with `cfg(fuzzing)`
 
 
-When building with `cargo hfuzz`, the argument `--cfg fuzzing` is passed to `rustc` to allow you to condition the compilation of thoses adaptations thanks to the `cfg` macro like so:
+When building with `cargo hfuzz`, the argument `--cfg fuzzing` is passed to `rustc` to allow you to condition the compilation of those adaptations thanks to the `cfg` macro like so:
 
 ```rust
 #[cfg(fuzzing)]
