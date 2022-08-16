@@ -1,6 +1,6 @@
 [package]
 name = "honggfuzz"
-version = "0.5.54"
+version = "0.5.55"
 edition = "2018"
 authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
 license = "MIT/Apache-2.0/Unlicense/WTFPL"
