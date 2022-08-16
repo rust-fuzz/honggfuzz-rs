@@ -33,7 +33,7 @@ fn main() {
     let out_dir = env::var("OUT_DIR").unwrap(); // from cargo
     let crate_root = env::var("CRATE_ROOT").unwrap(); //from honggfuzz
 
-    // clean upsteam honggfuzz directory
+    // clean upstream honggfuzz directory
     let status = Command::new(GNU_MAKE)
         .args(&["-C", "honggfuzz", "clean"])
         .status()

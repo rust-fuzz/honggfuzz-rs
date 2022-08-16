@@ -1,5 +1,7 @@
-#!/bin/sh -ve
+#!/bin/sh -vex
 export RUST_BACKTRACE=full
+
+CARGO_HFUZZ=${CARGO_HFUZZ:-"cargo hfuzz"} # by default, use regular subcommand. Override to force using another version (for tests) 
 
 cargo clean
 cargo update
@@ -9,12 +11,12 @@ cargo update
 mkdir subdirectory
 
 cd subdirectory
-cargo hfuzz clean
+$CARGO_HFUZZ clean
 cd ..
 
 # build example with instrumentation
 cd subdirectory
-cargo hfuzz build --verbose
+$CARGO_HFUZZ build --verbose
 cd ..
 
 # clean and prepare hfuzz_workspace
@@ -22,14 +24,14 @@ workspace="hfuzz_workspace/example"
 rm -rf $workspace
 mkdir -p $workspace/input
 
-# fuzz exemple
+# fuzz example
 cd subdirectory
-HFUZZ_RUN_ARGS="-v -N 10000000 --run_time 120 --exit_upon_crash" cargo hfuzz run example
+HFUZZ_RUN_ARGS="-v -N 10000000 --run_time 120 --exit_upon_crash" $CARGO_HFUZZ run example
 cd ..
 
 # build example without instrumentation
 cd subdirectory
-cargo hfuzz build-no-instr --verbose
+$CARGO_HFUZZ build-no-instr --verbose
 cd ..
 
 # get crash file path
@@ -40,7 +42,7 @@ test $(cat "$crash_path") = "hey"
 
 # build example in debug mode (and without sanitizers)
 cd subdirectory
-RUSTFLAGS="" cargo hfuzz build-debug --verbose
+RUSTFLAGS="" $CARGO_HFUZZ build-debug --verbose
 cd ..
 
 # try to launch the debug executable without the crash file, it should fail with error code 1
@@ -66,7 +68,7 @@ test $status -eq 2
 
 # run `hfuzz clean` from a subdirectory just to check that hfuzz subcommands are run at the crate root
 cd subdirectory
-cargo hfuzz clean
+$CARGO_HFUZZ clean
 cd ..
 
 rm -rf hfuzz_workspace
