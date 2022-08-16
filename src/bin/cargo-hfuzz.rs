@@ -295,7 +295,7 @@ where
     // FIXME: we split by whitespace without respecting escaping or quotes
     let mut hfuzz_build_args = hfuzz_build_args.split_whitespace();
 
-    let cargo_bin = env::var("CARGO").unwrap();
+    let cargo_bin = env::var("CARGO").unwrap_or_else(|_| "cargo".into());
     let mut command = Command::new(cargo_bin);
     command
         .args(&["build", "--target", &target_triple()]) // HACK to avoid building build scripts with rustflags
@@ -335,7 +335,7 @@ where
     T: std::iter::Iterator<Item = String>,
 {
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
-    let cargo_bin = env::var("CARGO").unwrap();
+    let cargo_bin = env::var("CARGO").unwrap_or_else(|_| "cargo".into());
     let status = Command::new(cargo_bin)
         .args(&["clean"])
         .args(args)

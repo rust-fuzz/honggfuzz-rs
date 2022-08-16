@@ -1,4 +1,4 @@
-#!/bin/sh -ve
+#!/bin/sh -vex
 export RUST_BACKTRACE=full
 
 git submodule update --init
@@ -7,14 +7,15 @@ cargo uninstall honggfuzz 2>/dev/null || true
 cargo clean
 cargo update
 
-# install cargo subcommands, unsetting the arbitrary feature for 1.47
+# build and set command env var
 version=`rustc --version`
 if [ -n "${version##*1.47*}" ] ;then
-	cargo install --path . --force --verbose
+	cargo build --release --verbose
 else
-	cargo install --path . --force --verbose --no-default-features
+	cargo build --release --verbose --no-default-features
 fi
-cargo hfuzz version
+export CARGO_HFUZZ="$(pwd)/target/release/cargo-hfuzz hfuzz" # force examples' tests to use this version
+$CARGO_HFUZZ version # record version for logs
 
 cd example
 
