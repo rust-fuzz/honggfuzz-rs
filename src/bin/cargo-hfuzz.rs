@@ -182,7 +182,7 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: s
 
             if *build_type == BuildType::ReleaseInstrumented {
                 rustflags.push_str("\
-                -C passes=sancov \
+                -C passes=sancov-module \
                 -C llvm-args=-sanitizer-coverage-level=4 \
                 -C llvm-args=-sanitizer-coverage-trace-pc-guard \
                 -C llvm-args=-sanitizer-coverage-trace-divs \
