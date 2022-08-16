@@ -211,7 +211,7 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: s
     // FIXME: we split by whitespace without respecting escaping or quotes
     let hfuzz_build_args = hfuzz_build_args.split_whitespace();
 
-    let cargo_bin = env::var("CARGO").unwrap();
+    let cargo_bin = env::var("CARGO").unwrap_or_else(|_| "cargo".into());
     let mut command = Command::new(cargo_bin);
     command.args(&["build", "--target", &target_triple()]) // HACK to avoid building build scripts with rustflags
         .args(args)
@@ -239,7 +239,7 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: s
 
 fn hfuzz_clean<T>(args: T) where T: std::iter::Iterator<Item=String> {
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
-    let cargo_bin = env::var("CARGO").unwrap();
+    let cargo_bin = env::var("CARGO").unwrap_or_else(|_| "cargo".into());
     let status = Command::new(cargo_bin)
         .args(&["clean"])
         .args(args)
