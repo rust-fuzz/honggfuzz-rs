@@ -160,7 +160,7 @@
 //! 
 //! Honggfuzz input files (also called "corpus"), defaults to `$HFUZZ_WORKSPACE/{TARGET}/input`.
 //! 
-//! ## Conditionnal compilation
+//! ## Conditional compilation
 //! 
 //! Sometimes, it is necessary to make some specific adaptation to your code to yield a better fuzzing efficiency.
 //! 
@@ -171,11 +171,11 @@
 //!   - Avoid potential undeterministic behavior from racing threads.
 //!   - ...
 //! - Never ever call `std::process::exit()`.
-//! - Disable logging and other unnecessary functionnalities.
+//! - Disable logging and other unnecessary functionalities.
 //! - Try to avoid modifying global state when possible.
 //! 
 //! 
-//! When building with `cargo hfuzz`, the argument `--cfg fuzzing` is passed to `rustc` to allow you to condition the compilation of thoses adaptations thanks to the `cfg` macro like so:
+//! When building with `cargo hfuzz`, the argument `--cfg fuzzing` is passed to `rustc` to allow you to condition the compilation of those adaptations thanks to the `cfg` macro like so:
 //! 
 //! ```rust
 //! # use rand::{self, Rng, SeedableRng};
@@ -247,7 +247,7 @@ pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
 
 // Registers a panic hook that aborts the process before unwinding.
 // It is useful to abort before unwinding so that the fuzzer will then be
-// able to analyse the process stack frames to tell different bugs appart.
+// able to analyse the process stack frames to tell different bugs apart.
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
 lazy_static::lazy_static! {
     static ref PANIC_HOOK: () = {
@@ -277,7 +277,7 @@ pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
 
     // We still catch unwinding panics just in case the fuzzed code modifies
     // the panic hook.
-    // If so, the fuzzer will be unable to tell different bugs appart and you will
+    // If so, the fuzzer will be unable to tell different bugs apart and you will
     // only be able to find one bug at a time before fixing it to then find a new one.
     // The closure is assumed to be unwind-safe, which might be unsafe. For more info, check the
     // [`std::panic::UnwindSafe`] trait.
@@ -296,7 +296,7 @@ pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
 pub fn fuzz<F>(closure: F) where F: FnOnce(&[u8]) {
     use std::env;
     use std::fs::File;
-    use memmap::MmapOptions;
+    use memmap2::MmapOptions;
     
     let filename = env::var("CARGO_HONGGFUZZ_CRASH_FILENAME").unwrap_or_else(|_|{
         eprintln!("error: Environment variable CARGO_HONGGFUZZ_CRASH_FILENAME not set. Try launching with \"cargo hfuzz run-debug TARGET CRASH_FILENAME [ ARGS ... ]\"");

@@ -206,18 +206,6 @@ where
 {
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
 
-    // HACK: temporary fix, see https://github.com/rust-lang/rust/issues/53945#issuecomment-426824324
-    let use_gold_linker: bool = match Command::new("which") // check if the gold linker is available
-        .args(&["ld.gold"])
-        .status()
-    {
-        Err(_) => false,
-        Ok(status) => match status.code() {
-            Some(0) => true,
-            _ => false,
-        },
-    };
-
     let mut rustflags = "\
     --cfg fuzzing \
     -C debug-assertions \
@@ -264,9 +252,22 @@ where
             );
 
             if *build_type == BuildType::ReleaseInstrumented {
-                rustflags.push_str(
-                    "\
-                -C passes=sancov \
+                // The new LLVM pass manager was not enabled in rustc 1.57 as expected:
+                // https://github.com/rust-lang/rust/pull/91263
+                // The fix for now is to pass `-C passes=sancov-module` only to
+                // compilers for which the LLVM version is >= 13.
+                let version_meta = rustc_version::version_meta().unwrap();
+                if version_meta.llvm_version.map_or(true, |v| v.major >= 13) {
+                    rustflags.push_str("\
+                    -C passes=sancov-module \
+                    ");
+                } else {
+                    rustflags.push_str("\
+                    -C passes=sancov \
+                    ");
+                };
+                
+                rustflags.push_str("\
                 -C llvm-args=-sanitizer-coverage-level=4 \
                 -C llvm-args=-sanitizer-coverage-trace-pc-guard \
                 -C llvm-args=-sanitizer-coverage-trace-divs \
@@ -281,11 +282,6 @@ where
                     ",
                     );
                 }
-
-                // HACK: temporary fix, see https://github.com/rust-lang/rust/issues/53945#issuecomment-426824324
-                if use_gold_linker {
-                    rustflags.push_str("-Clink-arg=-fuse-ld=gold ");
-                }
             }
         }
     }
@@ -298,7 +294,7 @@ where
     // FIXME: we split by whitespace without respecting escaping or quotes
     let mut hfuzz_build_args = hfuzz_build_args.split_whitespace();
 
-    let cargo_bin = env::var("CARGO").unwrap();
+    let cargo_bin = env::var("CARGO").unwrap_or_else(|_| "cargo".into());
     let mut command = Command::new(cargo_bin);
     command
         .args(&["build", "--target", &target_triple()]) // HACK to avoid building build scripts with rustflags
@@ -338,7 +334,7 @@ where
     T: std::iter::Iterator<Item = String>,
 {
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
-    let cargo_bin = env::var("CARGO").unwrap();
+    let cargo_bin = env::var("CARGO").unwrap_or_else(|_| "cargo".into());
     let status = Command::new(cargo_bin)
         .args(&["clean"])
         .args(args)

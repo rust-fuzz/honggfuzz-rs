@@ -1,4 +1,16 @@
-
+# rust
 /target
+example/target
+example/Cargo.lock
+
+# cargo-hfuzz
+example/hfuzz_target
+example/hfuzz_workspace
+
+# nix 
+result
+.direnv
+flake.lock
+
+# vim
 **/*.rs.bk
-**/Cargo.lock
