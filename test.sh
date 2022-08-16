@@ -1,4 +1,4 @@
-#!/bin/sh -ve
+#!/bin/sh -vex
 export RUST_BACKTRACE=full
 
 git submodule update --init
@@ -7,9 +7,10 @@ cargo uninstall honggfuzz 2>/dev/null || true
 cargo clean
 cargo update
 
-# install cargo subcommands
-cargo install --path . --force --verbose
-cargo hfuzz version
+# build and set command env var
+cargo build --release
+export CARGO_HFUZZ="$(pwd)/target/release/cargo-hfuzz hfuzz" # force examples' tests to use this version
+$CARGO_HFUZZ version # record version for logs
 
 cd example
 
