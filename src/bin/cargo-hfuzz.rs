@@ -129,19 +129,6 @@ fn hfuzz_run<T>(mut args: T, crate_root: &Path, build_type: &BuildType) where T:
 fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: std::iter::Iterator<Item=String> {
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
 
-    // HACK: temporary fix, see https://github.com/rust-lang/rust/issues/53945#issuecomment-426824324
-    let use_gold_linker: bool = match Command::new("which") // check if the gold linker is available
-            .args(&["ld.gold"])
-            .status() {
-        Err(_) => false,
-        Ok(status) => {
-            match status.code() {
-                Some(0) => true,
-                _       => false
-            }
-        }
-    };
-
     let mut rustflags = "\
     --cfg fuzzing \
     -C debug-assertions \
@@ -207,11 +194,6 @@ fn hfuzz_build<T>(args: T, crate_root: &Path, build_type: &BuildType) where T: s
                     rustflags.push_str("\
                     -C llvm-args=-sanitizer-coverage-trace-compares \
                     ");
-                }
-
-                // HACK: temporary fix, see https://github.com/rust-lang/rust/issues/53945#issuecomment-426824324
-                if use_gold_linker {
-                    rustflags.push_str("-Clink-arg=-fuse-ld=gold ");
                 }
             }
         }

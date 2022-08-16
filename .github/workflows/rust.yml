@@ -11,7 +11,7 @@ env:
 
 jobs:
   ubuntu-nightly:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
     - uses: actions-rs/toolchain@v1
@@ -25,7 +25,7 @@ jobs:
       run: ./test.sh
   
   ubuntu-beta:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
     - uses: actions-rs/toolchain@v1
@@ -39,7 +39,7 @@ jobs:
       run: ./test.sh
       
   ubuntu-stable:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
     - uses: actions-rs/toolchain@v1
