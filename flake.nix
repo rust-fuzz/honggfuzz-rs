@@ -37,7 +37,7 @@
         ];
 
         nativeBuildInputs = with pkgs; [
-          packages.${system}.honggfuzz-rs
+          packages.honggfuzz-rs
           inputs.rust-overlay.packages.${system}.rust # rustc from nixpkgs fails to compile hfuzz targets
         ];
       };
