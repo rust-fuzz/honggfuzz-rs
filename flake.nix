@@ -13,11 +13,10 @@
     };
   };
 
-  outputs = inputs:
-    let
-      pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+  outputs = inputs: inputs.flake-utils.lib.eachDefaultSystem ( system: let
+      pkgs = inputs.nixpkgs.legacyPackages.${system};
     in rec {
-      packages.x86_64-linux.honggfuzz-rs = pkgs.rustPlatform.buildRustPackage rec {
+      packages.honggfuzz-rs = pkgs.rustPlatform.buildRustPackage rec {
         pname = "honggfuzz-rs";
         version = "git";
 
@@ -28,7 +27,7 @@
         };
       };
 
-      devShells.x86_64-linux.default = pkgs.mkShell rec {
+      devShells.default = pkgs.mkShell rec {
         name = "honggfuzz-rs-devshell";
 
         buildInputs = with pkgs; [
@@ -38,11 +37,11 @@
         ];
 
         nativeBuildInputs = with pkgs; [
-          packages.x86_64-linux.honggfuzz-rs
-          inputs.rust-overlay.packages.x86_64-linux.rust # rustc from nixpkgs fails to compile hfuzz targets
+          packages.${system}.honggfuzz-rs
+          inputs.rust-overlay.packages.${system}.rust # rustc from nixpkgs fails to compile hfuzz targets
         ];
       };
 
-      packages.x86_64-linux.default = packages.x86_64-linux.honggfuzz-rs;
-    };
+      packages.default = packages.honggfuzz-rs;
+    });
 }
