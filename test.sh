@@ -1,7 +1,7 @@
 #!/bin/sh -vex
 export RUST_BACKTRACE=full
 
-git submodule update --init
+git submodule update --init --recursive
 
 cargo uninstall honggfuzz 2>/dev/null || true
 cargo clean
