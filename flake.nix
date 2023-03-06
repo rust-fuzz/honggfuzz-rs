@@ -30,7 +30,7 @@
           libunwind
         ];
 
-        nativeBuildInputs = with pkgs; [
+        inputsFrom = with pkgs; [
           packages.honggfuzz-rs
         ];
       };
