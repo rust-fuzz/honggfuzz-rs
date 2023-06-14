@@ -333,7 +333,7 @@ where
     else if *build_type != BuildType::Debug {
         // ensure we do not set --release when one of the build args
         // contains a --profile
-        if !hfuzz_build_args.any(|f| &f[..9] == "--profile") {
+        if !hfuzz_build_args.any(|f| f.starts_with("--profile")) {
             command.arg("--release");
         }
 
