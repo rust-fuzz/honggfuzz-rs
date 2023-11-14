@@ -5,7 +5,6 @@ git submodule update --init --recursive
 
 cargo uninstall honggfuzz 2>/dev/null || true
 cargo clean
-cargo update
 
 # build and set command env var
 version=`rustc --version`
