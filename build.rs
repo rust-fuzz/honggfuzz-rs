@@ -1,4 +1,6 @@
 use std::env;
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -14,7 +16,7 @@ const GNU_MAKE: &str = "gmake";
 
 fn main() {
     // Only build honggfuzz binaries if we are in the process of building an instrumentized binary
-    let honggfuzz_target=  match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
+    let honggfuzz_target = match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
         Ok(path) => path, // path where to place honggfuzz binary. provided by cargo-hfuzz command.
         Err(_) => return
     };
@@ -30,8 +32,9 @@ fn main() {
         process::exit(1);
     }
 
-    let out_dir = env::var("OUT_DIR").unwrap(); // from cargo
-    let crate_root = env::var("CRATE_ROOT").unwrap(); //from honggfuzz
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap()); // from cargo
+    let honggfuzz_target = Path::new(&env::var("CRATE_ROOT").unwrap()) // from honggfuzz
+        .join(honggfuzz_target); // resolve the original honggfuzz_target relative to CRATE_ROOT
 
     // clean upstream honggfuzz directory
     let status = Command::new(GNU_MAKE)
@@ -48,27 +51,12 @@ fn main() {
         .expect("failed to run \"make -C honggfuzz hongfuzz libhfuzz/libhfuzz.a libhfcommon/libhfcommon.a\"");
     assert!(status.success());
 
-    // copy hfuzz static library to output directory
-    let status = Command::new("cp")
-        .args(&["honggfuzz/libhfuzz/libhfuzz.a", &out_dir])
-        .status()
-        .expect(&format!("failed to run \"cp honggfuzz/libhfuzz/libhfuzz.a {}\"", &out_dir));
-    assert!(status.success());
-    let status = Command::new("cp")
-        .args(&["honggfuzz/libhfcommon/libhfcommon.a", &out_dir])
-        .status()
-        .expect(&format!("failed to run \"cp honggfuzz/libhfcommon/libhfcommon.a {}\"", &out_dir));
-    assert!(status.success());
-
-    // copy honggfuzz executable to honggfuzz target directory
-    let status = Command::new("cp")
-        .args(&["honggfuzz/honggfuzz", &format!("{}/{}", &crate_root, &honggfuzz_target)])
-        .status()
-        .expect(&format!("failed to run \"cp honggfuzz/honggfuzz {}\"", &honggfuzz_target));
-    assert!(status.success());
+    fs::copy("honggfuzz/libhfuzz/libhfuzz.a", out_dir.join("libhfuzz.a")).unwrap();
+    fs::copy("honggfuzz/libhfcommon/libhfcommon.a", out_dir.join("libhfcommon.a")).unwrap();
+    fs::copy("honggfuzz/honggfuzz", honggfuzz_target.join("honggfuzz")).unwrap();
 
     // tell cargo how to link final executable to hfuzz static library
     println!("cargo:rustc-link-lib=static={}", "hfuzz");
     println!("cargo:rustc-link-lib=static={}", "hfcommon");
-    println!("cargo:rustc-link-search=native={}", &out_dir);
+    println!("cargo:rustc-link-search=native={}", out_dir.display());
 }
