@@ -37,7 +37,7 @@ fn main() {
     let status = Command::new(GNU_MAKE)
         .args(&["-C", "honggfuzz", "clean"])
         .status()
-        .expect("failed to run \"make -C honggfuzz clean\"");
+        .unwrap_or_else(|_e| panic!("failed to run \"{} -C honggfuzz clean\"", GNU_MAKE));
     assert!(status.success());
     // TODO: maybe it's not a good idea to always clean the sources..
 
@@ -45,7 +45,7 @@ fn main() {
     let status = Command::new(GNU_MAKE)
         .args(&["-C", "honggfuzz", "honggfuzz", "libhfuzz/libhfuzz.a", "libhfcommon/libhfcommon.a"])
         .status()
-        .expect("failed to run \"make -C honggfuzz hongfuzz libhfuzz/libhfuzz.a libhfcommon/libhfcommon.a\"");
+        .unwrap_or_else(|_e| panic!("failed to run \"{} -C honggfuzz hongfuzz libhfuzz/libhfuzz.a libhfcommon/libhfcommon.a\"", GNU_MAKE));
     assert!(status.success());
 
     // copy hfuzz static library to output directory
