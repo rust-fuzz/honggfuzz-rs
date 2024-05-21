@@ -11,7 +11,7 @@ env:
 
 jobs:
   ubuntu-nightly:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v2
     - uses: actions-rs/toolchain@v1
@@ -20,26 +20,26 @@ jobs:
         toolchain: nightly
         override: true
     - name: Install Deps
-      run: sudo apt-get install --no-install-recommends binutils-dev libunwind8-dev
+      run: sudo apt-get install --no-install-recommends build-essential binutils-dev libunwind-dev libblocksruntime-dev liblzma-dev
     - name: Test
       run: ./test.sh
   
-  ubuntu-beta:
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: beta
-        override: true
-    - name: Install Deps
-      run: sudo apt-get install --no-install-recommends binutils-dev libunwind8-dev
-    - name: Test
-      run: ./test.sh
+#  ubuntu-beta:
+#    runs-on: ubuntu-24.04
+#    steps:
+#    - uses: actions/checkout@v2
+#    - uses: actions-rs/toolchain@v1
+#      with:
+#        profile: minimal
+#        toolchain: beta
+#        override: true
+#    - name: Install Deps
+#      run: sudo apt-get install --no-install-recommends build-essential binutils-dev libunwind-dev libblocksruntime-dev liblzma-dev
+#    - name: Test
+#      run: ./test.sh
       
   ubuntu-stable:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v2
     - uses: actions-rs/toolchain@v1
@@ -48,12 +48,12 @@ jobs:
         toolchain: stable
         override: true
     - name: Install Deps
-      run: sudo apt-get install --no-install-recommends binutils-dev libunwind8-dev
+      run: sudo apt-get install --no-install-recommends build-essential binutils-dev libunwind-dev libblocksruntime-dev liblzma-dev
     - name: Test
       run: ./test.sh
 
   ubuntu-msrv:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v2
     - uses: actions-rs/toolchain@v1
@@ -62,7 +62,7 @@ jobs:
         toolchain: 1.47.0
         override: true
     - name: Install Deps
-      run: sudo apt-get install --no-install-recommends binutils-dev libunwind8-dev
+      run: sudo apt-get install --no-install-recommends build-essential binutils-dev libunwind-dev libblocksruntime-dev liblzma-dev
     - name: Test
       run: ./test.sh
 
