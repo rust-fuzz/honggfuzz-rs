@@ -1,7 +1,7 @@
 use honggfuzz::fuzz;
 
 fn main() {
-    // Here you can parse `std::env::args and
+    // Here you can parse `std::env::args and 
     // setup / initialize your project
 
     // You should avoid as much as possible global states.
@@ -28,7 +28,7 @@ fn main() {
             if data[2] != b'y' {return}
             panic!("BOOM")
         });
-
+            
         // The fuzz macro gives an arbitrary object (see `arbitrary crate`)
         // to a closure-like block of code if you set the `arbitrary` feature.
         // Here, this tuple will contain two "random" values of different type.

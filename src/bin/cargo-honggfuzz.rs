@@ -1,10 +1,10 @@
 use std::env;
-use std::os::unix::process::CommandExt;
 use std::process::{self, Command};
+use std::os::unix::process::CommandExt;
 
 const HONGGFUZZ_TARGET: &str = "hfuzz_target";
 
-#[cfg(target_family = "windows")]
+#[cfg(target_family="windows")]
 compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
 
 fn main() {
@@ -29,9 +29,6 @@ fn main() {
         .exec();
 
     // code flow will only reach here if honggfuzz failed to execute
-    eprintln!(
-        "cannot execute {}, try to execute \"cargo hfuzz build\" from fuzzed project directory",
-        &command,
-    );
+    eprintln!("cannot execute {}, try to execute \"cargo hfuzz build\" from fuzzed project directory", &command);
     process::exit(1);
 }

@@ -208,14 +208,15 @@ where
 
     // HACK: temporary fix, see https://github.com/rust-lang/rust/issues/53945#issuecomment-426824324
     let use_gold_linker: bool = match Command::new("which") // check if the gold linker is available
-        .args(&["ld.gold"])
-        .status()
-    {
+            .args(&["ld.gold"])
+            .status() {
         Err(_) => false,
-        Ok(status) => match status.code() {
-            Some(0) => true,
-            _ => false,
-        },
+        Ok(status) => {
+            match status.code() {
+                Some(0) => true,
+                _       => false
+            }
+        }
     };
 
     let mut rustflags = "\
@@ -270,19 +271,15 @@ where
                 // compilers for which the LLVM version is >= 13.
                 let version_meta = rustc_version::version_meta().unwrap();
                 if version_meta.llvm_version.map_or(true, |v| v.major >= 13) {
-                    rustflags.push_str(
-                        "\
+                    rustflags.push_str("\
                     -C passes=sancov-module \
-                    ",
-                    );
+                    ");
                 } else {
-                    rustflags.push_str(
-                        "\
+                    rustflags.push_str("\
                     -C passes=sancov \
-                    ",
-                    );
+                    ");
                 };
-
+                
                 rustflags.push_str(
                     "\
                 -C llvm-args=-sanitizer-coverage-level=4 \
