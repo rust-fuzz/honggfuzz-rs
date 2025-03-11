@@ -2,7 +2,7 @@ use std::env;
 use std::fs;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
-use std::process::{self, Command};
+use std::process::{self, Command, Stdio};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const HONGGFUZZ_TARGET: &str = "hfuzz_target";
@@ -209,6 +209,9 @@ where
     // HACK: temporary fix, see https://github.com/rust-lang/rust/issues/53945#issuecomment-426824324
     let use_gold_linker: bool = match Command::new("which") // check if the gold linker is available
         .args(&["ld.gold"])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .stdin(Stdio::null())
         .status()
     {
         Err(_) => false,
