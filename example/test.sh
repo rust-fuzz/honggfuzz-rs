@@ -1,7 +1,7 @@
 #!/bin/sh -vex
 export RUST_BACKTRACE=full
 
-CARGO_HFUZZ=${CARGO_HFUZZ:-"cargo hfuzz"} # by default, use regular subcommand. Override to force using another version (for tests) 
+CARGO_HFUZZ=${CARGO_HFUZZ:-"cargo hfuzz"} # by default, use regular subcommand. Override to force using another version (for tests)
 
 cargo clean
 

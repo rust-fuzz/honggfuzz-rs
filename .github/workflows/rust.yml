@@ -23,7 +23,7 @@ jobs:
       run: sudo apt-get install --no-install-recommends build-essential binutils-dev libunwind-dev libblocksruntime-dev liblzma-dev
     - name: Test
       run: ./test.sh
-  
+
 #  ubuntu-beta:
 #    runs-on: ubuntu-24.04
 #    steps:
@@ -37,7 +37,7 @@ jobs:
 #      run: sudo apt-get install --no-install-recommends build-essential binutils-dev libunwind-dev libblocksruntime-dev liblzma-dev
 #    - name: Test
 #      run: ./test.sh
-      
+
   ubuntu-stable:
     runs-on: ubuntu-24.04
     steps:

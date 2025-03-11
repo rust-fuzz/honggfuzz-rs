@@ -279,7 +279,7 @@ where
                     -C passes=sancov \
                     ");
                 };
-                
+
                 rustflags.push_str(
                     "\
                 -C llvm-args=-sanitizer-coverage-level=4 \
