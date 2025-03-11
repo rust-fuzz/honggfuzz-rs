@@ -35,6 +35,7 @@ dependencies = [
  "rand",
  "rand_chacha",
  "rustc_version",
+ "semver",
 ]
 
 [[package]]
