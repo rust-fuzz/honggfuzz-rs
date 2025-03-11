@@ -5,24 +5,37 @@ use std::process::{self, Command};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[cfg(target_family="windows")]
+#[cfg(target_family = "windows")]
 compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
 
 // TODO: maybe use `make-cmd` crate
-#[cfg(not(any(target_os = "freebsd", target_os = "dragonfly", target_os = "bitrig", target_os = "openbsd", target_os = "netbsd")))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "dragonfly",
+    target_os = "bitrig",
+    target_os = "openbsd",
+    target_os = "netbsd"
+)))]
 const GNU_MAKE: &str = "make";
-#[cfg(any(target_os = "freebsd", target_os = "dragonfly", target_os = "bitrig", target_os = "openbsd", target_os = "netbsd"))]
+#[cfg(any(
+    target_os = "freebsd",
+    target_os = "dragonfly",
+    target_os = "bitrig",
+    target_os = "openbsd",
+    target_os = "netbsd"
+))]
 const GNU_MAKE: &str = "gmake";
 
 fn main() {
     // Only build honggfuzz binaries if we are in the process of building an instrumentized binary
     let honggfuzz_target = match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
         Ok(path) => path, // path where to place honggfuzz binary. provided by cargo-hfuzz command.
-        Err(_) => return
+        Err(_) => return,
     };
 
     // check that "cargo hfuzz" command is at the same version as this file
-    let honggfuzz_build_version = env::var("CARGO_HONGGFUZZ_BUILD_VERSION").unwrap_or("unknown".to_string());
+    let honggfuzz_build_version =
+        env::var("CARGO_HONGGFUZZ_BUILD_VERSION").unwrap_or("unknown".to_string());
     if VERSION != honggfuzz_build_version {
         eprintln!("The version of the honggfuzz library dependency ({0}) and the version of the `cargo-hfuzz` executable ({1}) do not match.\n\
                    If updating both by running `cargo update` and `cargo install honggfuzz` does not work, you can either:\n\
@@ -52,7 +65,11 @@ fn main() {
     assert!(status.success());
 
     fs::copy("honggfuzz/libhfuzz/libhfuzz.a", out_dir.join("libhfuzz.a")).unwrap();
-    fs::copy("honggfuzz/libhfcommon/libhfcommon.a", out_dir.join("libhfcommon.a")).unwrap();
+    fs::copy(
+        "honggfuzz/libhfcommon/libhfcommon.a",
+        out_dir.join("libhfcommon.a"),
+    )
+    .unwrap();
     fs::copy("honggfuzz/honggfuzz", honggfuzz_target.join("honggfuzz")).unwrap();
 
     // tell cargo how to link final executable to hfuzz static library
