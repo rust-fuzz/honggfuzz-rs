@@ -218,50 +218,36 @@ where
         },
     };
 
-    let mut rustflags = "\
-    --cfg fuzzing \
-    -C debug-assertions \
-    -C overflow_checks \
-    "
-    .to_string();
+    let mut rustflags = String::new();
+    rustflags.push_str("--cfg fuzzing ");
+    rustflags.push_str("-C debug-assertions ");
+    rustflags.push_str("-C overflow_checks ");
 
     let mut cargo_incremental = "1";
     match *build_type {
         BuildType::Debug => {
-            rustflags.push_str(
-                "\
-            --cfg fuzzing_debug \
-            -C opt-level=0 \
-            -C debuginfo=2 \
-            ",
-            );
+            rustflags.push_str("--cfg fuzzing_debug ");
+            rustflags.push_str("-C opt-level=0 ");
+            rustflags.push_str("-C debuginfo=2 ");
         }
 
         BuildType::ProfileWithGrcov => {
-            rustflags.push_str(
-                "\
-            --cfg fuzzing_debug \
-            -Zprofile \
-            -Cpanic=abort \
-            -C opt-level=0 \
-            -C debuginfo=2 \
-            -Ccodegen-units=1 \
-            -Cinline-threshold=0 \
-            -Clink-dead-code \
-            ",
-            );
-            //-Coverflow-checks=off \
+            rustflags.push_str("--cfg fuzzing_debug ");
+            rustflags.push_str("-Zprofile ");
+            rustflags.push_str("-Cpanic=abort ");
+            rustflags.push_str("-C opt-level=0 ");
+            rustflags.push_str("-C debuginfo=2 ");
+            rustflags.push_str("-Ccodegen-units=1 ");
+            rustflags.push_str("-Cinline-threshold=0 ");
+            rustflags.push_str("-Clink-dead-code ");
+            //rustflags.push_str("-Coverflow-checks=off ");
             cargo_incremental = "0";
         }
 
         _ => {
-            rustflags.push_str(
-                "\
-            -C opt-level=3 \
-            -C target-cpu=native \
-            -C debuginfo=0 \
-            ",
-            );
+            rustflags.push_str("-C opt-level=3 ");
+            rustflags.push_str("-C target-cpu=native ");
+            rustflags.push_str("-C debuginfo=0 ");
 
             if *build_type == BuildType::ReleaseInstrumented {
                 // The new LLVM pass manager was not enabled in rustc 1.57 as expected:
@@ -270,34 +256,18 @@ where
                 // compilers for which the LLVM version is >= 13.
                 let version_meta = rustc_version::version_meta().unwrap();
                 if version_meta.llvm_version.map_or(true, |v| v.major >= 13) {
-                    rustflags.push_str(
-                        "\
-                    -C passes=sancov-module \
-                    ",
-                    );
+                    rustflags.push_str("-C passes=sancov-module ");
                 } else {
-                    rustflags.push_str(
-                        "\
-                    -C passes=sancov \
-                    ",
-                    );
+                    rustflags.push_str("-C passes=sancov ");
                 };
 
-                rustflags.push_str(
-                    "\
-                -C llvm-args=-sanitizer-coverage-level=4 \
-                -C llvm-args=-sanitizer-coverage-trace-pc-guard \
-                -C llvm-args=-sanitizer-coverage-trace-divs \
-                ",
-                );
+                rustflags.push_str("-C llvm-args=-sanitizer-coverage-level=4 ");
+                rustflags.push_str("-C llvm-args=-sanitizer-coverage-trace-pc-guard ");
+                rustflags.push_str("-C llvm-args=-sanitizer-coverage-trace-divs ");
 
                 // trace-compares doesn't work on macOS without a sanitizer
                 if cfg!(not(target_os = "macos")) {
-                    rustflags.push_str(
-                        "\
-                    -C llvm-args=-sanitizer-coverage-trace-compares \
-                    ",
-                    );
+                    rustflags.push_str("-C llvm-args=-sanitizer-coverage-trace-compares ");
                 }
 
                 // HACK: temporary fix, see https://github.com/rust-lang/rust/issues/53945#issuecomment-426824324
