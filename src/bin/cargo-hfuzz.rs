@@ -170,7 +170,7 @@ where
                 });
 
             let command = format!("{}/honggfuzz", &honggfuzz_target);
-            Command::new(&command) // exec honggfuzz replacing current process
+            let err = Command::new(&command) // exec honggfuzz replacing current process
                 .args(&[
                     "-W",
                     &format!("{}/{}", &honggfuzz_workspace, target),
@@ -196,6 +196,7 @@ where
 
             // code flow will only reach here if honggfuzz failed to execute
             eprintln!("cannot execute {}, try to execute \"cargo hfuzz build\" from fuzzed project directory", &command);
+            eprintln!("{:?}", err);
             process::exit(1);
         }
     }
