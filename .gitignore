@@ -10,6 +10,7 @@ example/hfuzz_workspace
 # nix 
 result
 .direnv
+.devenv
 flake.lock
 
 # vim
