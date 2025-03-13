@@ -35,8 +35,8 @@ rustc_version = "0.4"
 semver = "1"
 
 [dev-dependencies]
-rand = "0.8"
-rand_chacha = "0.3"
+rand = "0.9"
+rand_chacha = "0.9"
 
 [target.'cfg(fuzzing)'.dependencies]
 lazy_static = "1.5"
