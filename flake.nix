@@ -31,28 +31,35 @@
       url = "github:nix-community/fenix";
       inputs.nixpkgs.follows = "nixpkgs";
     }; 
+
+    crane = { # eventually, use dream2nix when it's more stable
+      url = "github:ipetkov/crane";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs @ {flake-parts, nixpkgs, nixpkgs-glibc237, ...}: flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = inputs @ {flake-parts, nixpkgs, nixpkgs-glibc237, fenix, crane, ...}: flake-parts.lib.mkFlake { inherit inputs; } {
     imports = [
       inputs.devenv.flakeModule
     ];
     systems = nixpkgs.lib.systems.flakeExposed;
 
     perSystem = {system, pkgs, self', ...}: let 
-      pkgs-glibc237 = nixpkgs-glibc237.legacyPackages.${system};
+      pkgs-glibc237 = import nixpkgs-glibc237 {
+        inherit system;
+      };
+      pkgs-fenix = import nixpkgs {
+        inherit system;
+        overlays = [ fenix.overlays.default ];
+      };
     in {
-      packages = rec {
+      packages = let
+        craneLib = crane.mkLib pkgs;
+        #craneLib = (crane.mkLib pkgs-fenix).overrideToolchain (p: p.fenix.minimal.toolchain); # rust nightly
+      in rec {
         default = honggfuzz-rs;
-        honggfuzz-rs = pkgs-glibc237.rustPlatform.buildRustPackage rec {
-          pname = "honggfuzz-rs";
-          version = "git";
-
-          src = ./.;
-
-          cargoLock = {
-            lockFile = ./Cargo.lock;
-          };
+        honggfuzz-rs = craneLib.buildPackage {
+          src = craneLib.cleanCargoSource (craneLib.path ./.);
         };
       };
 
