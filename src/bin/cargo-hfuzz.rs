@@ -1,3 +1,4 @@
+use rustc_version::Channel;
 use std::env;
 use std::fs;
 use std::os::unix::process::CommandExt;
@@ -207,7 +208,21 @@ where
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
 
     // HACK: temporary fix, see https://github.com/rust-lang/rust/issues/53945#issuecomment-426824324
-    let use_gold_linker: bool = match Command::new("which") // check if the gold linker is available
+    let use_gold_linker: bool = match rustc_version::version_meta() {
+        Ok(version_meta) => match version_meta.channel {
+            Channel::Nightly | Channel::Dev => {
+                // old nightly
+                version_meta
+                    .commit_date
+                    .map_or(false, |date| *date < *"2025-03-08")
+            }
+            Channel::Stable | Channel::Beta => {
+                // old non-nightly
+                version_meta.semver < semver::Version::new(1, 87, 0)
+            }
+        },
+        Err(_) => false,
+    } && match Command::new("which") // only if gold linker is available
         .args(&["ld.gold"])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
