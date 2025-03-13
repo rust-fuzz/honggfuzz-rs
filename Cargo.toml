@@ -1,6 +1,6 @@
 [package]
 name = "honggfuzz"
-version = "0.5.56"
+version = "0.5.57"
 edition = "2021"
 rust-version = "1.63"
 authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
