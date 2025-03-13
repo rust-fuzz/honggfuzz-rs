@@ -12,7 +12,6 @@ compile_error!("honggfuzz-rs does not currently support Windows but works well u
 #[cfg(not(any(
     target_os = "freebsd",
     target_os = "dragonfly",
-    target_os = "bitrig",
     target_os = "openbsd",
     target_os = "netbsd"
 )))]
@@ -20,7 +19,6 @@ const GNU_MAKE: &str = "make";
 #[cfg(any(
     target_os = "freebsd",
     target_os = "dragonfly",
-    target_os = "bitrig",
     target_os = "openbsd",
     target_os = "netbsd"
 ))]
