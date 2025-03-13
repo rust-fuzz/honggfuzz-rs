@@ -22,7 +22,7 @@ fn main() {
     let tsan_options = format!("report_signal_unsafe=0:{}", tsan_options);
 
     let command = format!("{}/honggfuzz", HONGGFUZZ_TARGET);
-    Command::new(&command) // exec honggfuzz replacing current process
+    let err = Command::new(&command) // exec honggfuzz replacing current process
         .args(args)
         .env("ASAN_OPTIONS", asan_options)
         .env("TSAN_OPTIONS", tsan_options)
@@ -33,5 +33,6 @@ fn main() {
         "cannot execute {}, try to execute \"cargo hfuzz build\" from fuzzed project directory",
         &command,
     );
+    eprintln!("{:?}", err);
     process::exit(1);
 }
