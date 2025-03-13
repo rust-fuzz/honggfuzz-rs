@@ -14,9 +14,6 @@
 
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # this is the last version with glibc <= 2.37. Newer versions of glibc make honggfuzz fail to build, see https://github.com/google/honggfuzz/issues/518
-    nixpkgs-glibc237.url = "github:NixOS/nixpkgs/nixos-23.05";
-
     devenv = {
       url = "github:cachix/devenv";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -38,49 +35,46 @@
     };
   };
 
-  outputs = inputs @ {flake-parts, nixpkgs, nixpkgs-glibc237, fenix, crane, ...}: flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = inputs @ {flake-parts, nixpkgs, fenix, crane, ...}: flake-parts.lib.mkFlake { inherit inputs; } {
     imports = [
       inputs.devenv.flakeModule
     ];
     systems = nixpkgs.lib.systems.flakeExposed;
 
     perSystem = {system, pkgs, self', ...}: let 
-      pkgs-glibc237 = import nixpkgs-glibc237 {
-        inherit system;
-      };
       pkgs-fenix = import nixpkgs {
         inherit system;
         overlays = [ fenix.overlays.default ];
       };
     in {
       packages = let
-        craneLib = crane.mkLib pkgs;
-        #craneLib = (crane.mkLib pkgs-fenix).overrideToolchain (p: p.fenix.minimal.toolchain); # rust nightly
+        #craneLib = crane.mkLib pkgs;
+        craneLib = (crane.mkLib pkgs-fenix).overrideToolchain (p: p.fenix.minimal.toolchain); # rust nightly
       in rec {
         default = honggfuzz-rs;
         honggfuzz-rs = craneLib.buildPackage {
           src = craneLib.cleanCargoSource (craneLib.path ./.);
+          hardeningDisable = [ "fortify" ];
         };
       };
 
       devenv.shells.default = {
-        stdenv = pkgs-glibc237.stdenv;
-
-        packages = with pkgs-glibc237; [
+        packages = with pkgs; [
           libbfd
           bintools-unwrapped
           libunwind
-
-          cargo
-          rustc
         ];
 
-        # languages = {
-        #   rust = {
-        #     enable = true;
-        #     channel = "stable";
-        #   };
-        # };
+        env = {
+          NIX_HARDENING_ENABLE = "";
+        };
+
+        languages = {
+          rust = {
+            enable = true;
+            channel = "nightly";
+          };
+        };
       };
     };
   };
