@@ -66,18 +66,21 @@
       devenv.shells.default = {
         stdenv = pkgs-glibc237.stdenv;
 
-        packages = with pkgs; [
+        packages = with pkgs-glibc237; [
           libbfd
           bintools-unwrapped
           libunwind
+
+          cargo
+          rustc
         ];
 
-        languages = {
-          rust = {
-            enable = true;
-            channel = "stable";
-          };
-        };
+        # languages = {
+        #   rust = {
+        #     enable = true;
+        #     channel = "stable";
+        #   };
+        # };
       };
     };
   };
