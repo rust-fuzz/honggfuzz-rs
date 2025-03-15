@@ -53,20 +53,21 @@
       in rec {
         default = honggfuzz-rs;
         honggfuzz-rs = craneLib.buildPackage {
+          #stdenv = pkgs.clangStdenv;
           src = craneLib.cleanCargoSource (craneLib.path ./.);
-          hardeningDisable = [ "fortify" ];
+          #hardeningDisable = [ "fortify" ];
         };
       };
 
-      devenv.shells.default = {
+      devenv.shells.default = rec {
+        #stdenv = pkgs.clangStdenv;
         packages = with pkgs; [
           libbfd
-          bintools-unwrapped
           libunwind
-        ];
+        ] ++ lib.optional stdenv.cc.isClang pkgsStatic.libblocksruntime;
 
         env = {
-          NIX_HARDENING_ENABLE = "";
+          NIX_HARDENING_ENABLE = ""; # to disable fortify flag
         };
 
         languages = {
