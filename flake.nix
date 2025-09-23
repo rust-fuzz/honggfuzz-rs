@@ -24,8 +24,8 @@
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
     
-    fenix = {
-      url = "github:nix-community/fenix";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     }; 
 
@@ -61,6 +61,7 @@
 
       devenv.shells.default = rec {
         #stdenv = pkgs.clangStdenv;
+        #stdenv = pkgs.gcc15Stdenv;
         packages = with pkgs; [
           libbfd
           libunwind
