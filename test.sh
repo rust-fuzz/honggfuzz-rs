@@ -29,9 +29,9 @@ HFUZZ_BUILD_ARGS="--no-default-features" RUSTFLAGS="" ./test.sh
 # run test.sh with sanitizers only on nightly
 if [ -z "${version##*nightly*}" ] ;then
 	if [ "`uname`" = "Linux" ] ;then
-		RUSTFLAGS="-Z sanitizer=address" ./test.sh # not working on macos
-		RUSTFLAGS="-Z sanitizer=thread" ./test.sh # not working on macos
-		RUSTFLAGS="-Z sanitizer=leak" ./test.sh # the leak sanitizer is only available on Linux
+		RUSTFLAGS="-Z sanitizer=address -Cunsafe-allow-abi-mismatch=sanitizer" ./test.sh # not working on macos
+		RUSTFLAGS="-Z sanitizer=thread -Cunsafe-allow-abi-mismatch=sanitizer" ./test.sh # not working on macos
+		RUSTFLAGS="-Z sanitizer=leak -Cunsafe-allow-abi-mismatch=sanitizer" ./test.sh # the leak sanitizer is only available on Linux
 	fi
 	# RUSTFLAGS="-Z sanitizer=memory" ./test.sh # not working, see: https://github.com/rust-lang/rust/issues/39610
 fi
