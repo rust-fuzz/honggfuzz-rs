@@ -31,6 +31,7 @@ default = ["arbitrary"]
 
 [dependencies]
 arbitrary = { version = "1", optional = true }
+libc = "0.2"
 rustc_version = "0.4"
 semver = "1"
 
@@ -43,3 +44,6 @@ lazy_static = "1.5"
 
 [target.'cfg(fuzzing_debug)'.dependencies]
 memmap2 = "0.9"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fuzzing)', 'cfg(fuzzing_debug)'] }
