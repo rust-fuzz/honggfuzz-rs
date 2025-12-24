@@ -249,6 +249,53 @@ where
     std::process::exit(17);
 }
 
+// This is the magic file descriptor honggfuzz uses
+// https://github.com/google/honggfuzz/blob/8baf395e52a5d5dbb9f16642ad3be419fa6c58cb/honggfuzz.h#L89-L90
+const HF_INPUT_FD: std::os::unix::io::RawFd = 1021;
+
+fn is_input_available() -> bool {
+    unsafe {
+        let result = libc::fcntl(HF_INPUT_FD, libc::F_GETFD);
+        // https://github.com/google/honggfuzz/blob/8baf395e52a5d5dbb9f16642ad3be419fa6c58cb/libhfuzz/fetch.c#L23-L24
+        if result == -1 && *libc::__errno_location() == libc::EBADF {
+            false // Honggfuzz persistent mode
+        } else {
+            true // Read from file or stdin
+        }
+    }
+}
+
+fn run_from_file<F>(closure: F) -> i32
+where
+    F: FnOnce(&[u8]),
+{
+    let args: Vec<String> = std::env::args().collect();
+
+    let input = if args.len() > 1 {
+        match std::fs::read(&args[args.len() - 1]) {
+            Ok(data) => data,
+            Err(e) => {
+                eprintln!("Cannot open '{}': {}", args[args.len() - 1], e);
+                return 1;
+            }
+        }
+    } else {
+        read_stdin()
+    };
+
+    closure(&input);
+    0
+}
+
+fn read_stdin() -> Vec<u8> {
+    use std::io::Read;
+    let mut buf = Vec::new();
+    std::io::stdin()
+        .read_to_end(&mut buf)
+        .expect("Failed to read stdin");
+    buf
+}
+
 // Registers a panic hook that aborts the process before unwinding.
 // It is useful to abort before unwinding so that the fuzzer will then be
 // able to analyse the process stack frames to tell different bugs apart.
@@ -271,15 +318,22 @@ where
     // sets panic hook if not already done
     lazy_static::initialize(&PANIC_HOOK);
 
-    // get buffer from honggfuzz runtime
-    let buf;
+    // Relicating logic from: https://github.com/google/honggfuzz/blob/8baf395e52a5d5dbb9f16642ad3be419fa6c58cb/libhfuzz/persistent.c#L117-L121
+    // Check if running in persistent mode
+    if !is_input_available() {
+        // Running standalone - read input from file/stdin and run once
+        std::process::exit(run_from_file(closure));
+    }
 
+    // Persistent loop
+    let buf;
     let mut buf_ptr = MaybeUninit::<*const u8>::uninit();
     let mut len_ptr = MaybeUninit::<usize>::uninit();
 
     unsafe {
+        // Get buffer from honggfuzz runtime
         HF_ITER(buf_ptr.as_mut_ptr(), len_ptr.as_mut_ptr());
-        buf = ::std::slice::from_raw_parts(buf_ptr.assume_init(), len_ptr.assume_init());
+        buf = std::slice::from_raw_parts(buf_ptr.assume_init(), len_ptr.assume_init());
     }
 
     // We still catch unwinding panics just in case the fuzzed code modifies
