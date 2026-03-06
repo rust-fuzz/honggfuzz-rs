@@ -13,21 +13,29 @@
     # };
 
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    #nixpkgs.url = "github:cachix/devenv-nixpkgs/rolling";
 
     devenv = {
       url = "github:cachix/devenv";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    
+
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
-    
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
+
+    nix2container = {
+      url = "github:nlewo/nix2container";
       inputs.nixpkgs.follows = "nixpkgs";
-    }; 
+    };
+
+    #mk-shell-bin.url = "github:rrbutani/nix-mk-shell-bin";
+
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay/29a57fd94e9f384597222fb3301466a112a8c200"; # https://github.com/cachix/devenv/pull/2558
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     crane = { # eventually, use dream2nix when it's more stable
       url = "github:ipetkov/crane";
@@ -35,13 +43,13 @@
     };
   };
 
-  outputs = inputs @ {flake-parts, nixpkgs, fenix, crane, ...}: flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = inputs @ {flake-parts, nixpkgs, systems, fenix, crane, ...}: flake-parts.lib.mkFlake { inherit inputs; } {
     imports = [
       inputs.devenv.flakeModule
     ];
     systems = nixpkgs.lib.systems.flakeExposed;
 
-    perSystem = {system, pkgs, self', ...}: let 
+    perSystem = {system, pkgs, self', ...}: let
       pkgs-fenix = import nixpkgs {
         inherit system;
         overlays = [ fenix.overlays.default ];
