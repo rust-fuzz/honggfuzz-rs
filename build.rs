@@ -24,6 +24,25 @@ const GNU_MAKE: &str = "make";
 ))]
 const GNU_MAKE: &str = "gmake";
 
+/// Recursively copy a directory tree from `src` to `dst`.
+fn copy_dir_all(src: &Path, dst: &Path) {
+    fs::create_dir_all(dst).unwrap();
+    for entry in fs::read_dir(src).unwrap() {
+        let entry = entry.unwrap();
+        let ty = entry.file_type().unwrap();
+        let dst_path = dst.join(entry.file_name());
+        if ty.is_dir() {
+            copy_dir_all(&entry.path(), &dst_path);
+        } else if ty.is_symlink() {
+            let target = fs::read_link(entry.path()).unwrap();
+            #[cfg(unix)]
+            std::os::unix::fs::symlink(&target, &dst_path).unwrap();
+        } else {
+            fs::copy(entry.path(), &dst_path).unwrap();
+        }
+    }
+}
+
 fn main() {
     // Only build honggfuzz binaries if we are in the process of building an instrumentized binary
     let honggfuzz_target = match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
@@ -47,28 +66,31 @@ fn main() {
     let honggfuzz_target = Path::new(&env::var("CRATE_ROOT").unwrap()) // from honggfuzz
         .join(honggfuzz_target); // resolve the original honggfuzz_target relative to CRATE_ROOT
 
-    // clean upstream honggfuzz directory
-    let status = Command::new(GNU_MAKE)
-        .args(&["-C", "honggfuzz", "clean"])
-        .status()
-        .unwrap_or_else(|_e| panic!("failed to run \"{} -C honggfuzz clean\"", GNU_MAKE));
-    assert!(status.success());
-    // TODO: maybe it's not a good idea to always clean the sources..
+    // Copy honggfuzz source tree into OUT_DIR so we can build in a writable
+    // directory. This is required for Nix builds where the source directory
+    // is read-only.
+    let build_dir = out_dir.join("honggfuzz");
+    if build_dir.exists() {
+        fs::remove_dir_all(&build_dir).unwrap();
+    }
+    copy_dir_all(Path::new("honggfuzz"), &build_dir);
+
+    let build_dir_str = build_dir.to_str().unwrap();
 
     // build honggfuzz command and hfuzz static library
     let status = Command::new(GNU_MAKE)
-        .args(&["-C", "honggfuzz", "honggfuzz", "libhfuzz/libhfuzz.a", "libhfcommon/libhfcommon.a"])
+        .args(&["-C", build_dir_str, "honggfuzz", "libhfuzz/libhfuzz.a", "libhfcommon/libhfcommon.a"])
         .status()
-        .unwrap_or_else(|_e| panic!("failed to run \"{} -C honggfuzz hongfuzz libhfuzz/libhfuzz.a libhfcommon/libhfcommon.a\"", GNU_MAKE));
+        .unwrap_or_else(|_e| panic!("failed to run \"{} -C {} honggfuzz libhfuzz/libhfuzz.a libhfcommon/libhfcommon.a\"", GNU_MAKE, build_dir_str));
     assert!(status.success());
 
-    fs::copy("honggfuzz/libhfuzz/libhfuzz.a", out_dir.join("libhfuzz.a")).unwrap();
+    fs::copy(build_dir.join("libhfuzz/libhfuzz.a"), out_dir.join("libhfuzz.a")).unwrap();
     fs::copy(
-        "honggfuzz/libhfcommon/libhfcommon.a",
+        build_dir.join("libhfcommon/libhfcommon.a"),
         out_dir.join("libhfcommon.a"),
     )
     .unwrap();
-    fs::copy("honggfuzz/honggfuzz", honggfuzz_target.join("honggfuzz")).unwrap();
+    fs::copy(build_dir.join("honggfuzz"), honggfuzz_target.join("honggfuzz")).unwrap();
 
     // tell cargo how to link final executable to hfuzz static library
     println!("cargo:rustc-link-lib=static={}", "hfuzz");
