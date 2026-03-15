@@ -24,19 +24,52 @@ const GNU_MAKE: &str = "make";
 ))]
 const GNU_MAKE: &str = "gmake";
 
-/// Recursively copy a directory tree from `src` to `dst`.
-fn copy_dir_all(src: &Path, dst: &Path) {
+/// Directories to skip when mirroring the source tree (they are not needed
+/// for the build and would waste a lot of space).
+const SKIP_DIRS: &[&str] = &["examples"];
+
+/// Check whether hardlinks work between `src` and `dst` directories by
+/// trying to hardlink an existing file from `src` into `dst`.
+fn can_hardlink(src: &Path, dst: &Path) -> bool {
+    // Pick any existing file in src to use as a probe.
+    let probe_src = match fs::read_dir(src).ok().and_then(|mut d| {
+        d.find(|e| {
+            e.as_ref()
+                .is_ok_and(|e| e.file_type().is_ok_and(|t| t.is_file()))
+        })
+    }) {
+        Some(Ok(entry)) => entry.path(),
+        _ => return false,
+    };
+    let probe_dst = dst.join(".hardlink_probe");
+    let ok = fs::hard_link(&probe_src, &probe_dst).is_ok();
+    let _ = fs::remove_file(&probe_dst);
+    ok
+}
+
+/// Recursively mirror a directory tree from `src` to `dst`.
+///
+/// When `use_hardlinks` is true, regular files are hard-linked instead of
+/// copied, saving disk space and I/O.
+/// Directories listed in `SKIP_DIRS` are skipped entirely.
+fn mirror_dir_all(src: &Path, dst: &Path, use_hardlinks: bool) {
     fs::create_dir_all(dst).unwrap();
     for entry in fs::read_dir(src).unwrap() {
         let entry = entry.unwrap();
+        let name = entry.file_name();
         let ty = entry.file_type().unwrap();
-        let dst_path = dst.join(entry.file_name());
+        let dst_path = dst.join(&name);
         if ty.is_dir() {
-            copy_dir_all(&entry.path(), &dst_path);
+            if SKIP_DIRS.iter().any(|s| *s == name) {
+                continue;
+            }
+            mirror_dir_all(&entry.path(), &dst_path, use_hardlinks);
         } else if ty.is_symlink() {
             let target = fs::read_link(entry.path()).unwrap();
             #[cfg(unix)]
             std::os::unix::fs::symlink(&target, &dst_path).unwrap();
+        } else if use_hardlinks {
+            fs::hard_link(entry.path(), &dst_path).unwrap();
         } else {
             fs::copy(entry.path(), &dst_path).unwrap();
         }
@@ -66,14 +99,14 @@ fn main() {
     let honggfuzz_target = Path::new(&env::var("CRATE_ROOT").unwrap()) // from honggfuzz
         .join(honggfuzz_target); // resolve the original honggfuzz_target relative to CRATE_ROOT
 
-    // Copy honggfuzz source tree into OUT_DIR so we can build in a writable
-    // directory. This is required for Nix builds where the source directory
-    // is read-only.
+    // Mirror honggfuzz source tree into OUT_DIR so we can build in a
+    // writable directory. This is required for Nix builds where the source
+    // directory is read-only. Use hardlinks when possible (same filesystem)
+    // to save disk space, falling back to copies otherwise.
     let build_dir = out_dir.join("honggfuzz");
-    if build_dir.exists() {
-        fs::remove_dir_all(&build_dir).unwrap();
-    }
-    copy_dir_all(Path::new("honggfuzz"), &build_dir);
+    fs::create_dir_all(&build_dir).unwrap();
+    let use_hardlinks = can_hardlink(Path::new("honggfuzz"), &build_dir);
+    mirror_dir_all(Path::new("honggfuzz"), &build_dir, use_hardlinks);
 
     let build_dir_str = build_dir.to_str().unwrap();
 
@@ -84,13 +117,21 @@ fn main() {
         .unwrap_or_else(|_e| panic!("failed to run \"{} -C {} honggfuzz libhfuzz/libhfuzz.a libhfcommon/libhfcommon.a\"", GNU_MAKE, build_dir_str));
     assert!(status.success());
 
-    fs::copy(build_dir.join("libhfuzz/libhfuzz.a"), out_dir.join("libhfuzz.a")).unwrap();
+    fs::copy(
+        build_dir.join("libhfuzz/libhfuzz.a"),
+        out_dir.join("libhfuzz.a"),
+    )
+    .unwrap();
     fs::copy(
         build_dir.join("libhfcommon/libhfcommon.a"),
         out_dir.join("libhfcommon.a"),
     )
     .unwrap();
-    fs::copy(build_dir.join("honggfuzz"), honggfuzz_target.join("honggfuzz")).unwrap();
+    fs::copy(
+        build_dir.join("honggfuzz"),
+        honggfuzz_target.join("honggfuzz"),
+    )
+    .unwrap();
 
     // tell cargo how to link final executable to hfuzz static library
     println!("cargo:rustc-link-lib=static={}", "hfuzz");
