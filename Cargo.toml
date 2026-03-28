@@ -36,7 +36,7 @@ semver = "1"
 
 [dev-dependencies]
 rand = "0.9"
-rand_chacha = "0.9"
+rand_chacha = "0.10"
 
 [target.'cfg(fuzzing)'.dependencies]
 lazy_static = "1.5"
