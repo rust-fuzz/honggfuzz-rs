@@ -35,7 +35,7 @@ fn can_hardlink(src: &Path, dst: &Path) -> bool {
     let probe_src = match fs::read_dir(src).ok().and_then(|mut d| {
         d.find(|e| {
             e.as_ref()
-                .map_or(false, |e| e.file_type().map_or(false, |t| t.is_file())) // TODO when MSRV=1.70: .is_ok_and(|e| e.file_type().is_ok_and(|t| t.is_file()))
+                .is_ok_and(|e| e.file_type().is_ok_and(|t| t.is_file()))
         })
     }) {
         Some(Ok(entry)) => entry.path(),
