@@ -239,8 +239,9 @@ where
 
     let mut rustflags = String::new();
     rustflags.push_str("--cfg fuzzing ");
-    rustflags.push_str("-C debug-assertions ");
-    rustflags.push_str("-C overflow_checks ");
+    rustflags.push_str("-C debug-assertions=y ");
+    rustflags.push_str("-C overflow-checks=y ");
+    rustflags.push_str("-C force-frame-pointers=y ");
 
     let mut cargo_incremental = "1";
     match *build_type {
@@ -253,12 +254,11 @@ where
         BuildType::ProfileWithGrcov => {
             rustflags.push_str("--cfg fuzzing_debug ");
             rustflags.push_str("-Zprofile ");
-            rustflags.push_str("-Cpanic=abort ");
+            rustflags.push_str("-C panic=abort ");
             rustflags.push_str("-C opt-level=0 ");
             rustflags.push_str("-C debuginfo=2 ");
-            rustflags.push_str("-Ccodegen-units=1 ");
-            rustflags.push_str("-Cinline-threshold=0 ");
-            rustflags.push_str("-Clink-dead-code ");
+            rustflags.push_str("-C codegen-units=1 ");
+            rustflags.push_str("-C link-dead-code ");
             //rustflags.push_str("-Coverflow-checks=off ");
             cargo_incremental = "0";
         }
@@ -280,9 +280,11 @@ where
                     rustflags.push_str("-C passes=sancov ");
                 };
 
-                rustflags.push_str("-C llvm-args=-sanitizer-coverage-level=4 ");
+                rustflags.push_str("-C llvm-args=-sanitizer-coverage-level=4 "); // enables indirect calls
                 rustflags.push_str("-C llvm-args=-sanitizer-coverage-trace-pc-guard ");
                 rustflags.push_str("-C llvm-args=-sanitizer-coverage-trace-divs ");
+                rustflags.push_str("-C llvm-args=-sanitizer-coverage-trace-geps ");
+                rustflags.push_str("-C llvm-args=-sanitizer-coverage-stack-depth ");
 
                 // trace-compares doesn't work on macOS without a sanitizer
                 if cfg!(not(target_os = "macos")) {

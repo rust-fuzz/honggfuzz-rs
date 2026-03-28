@@ -43,3 +43,6 @@ lazy_static = "1.5"
 
 [target.'cfg(fuzzing_debug)'.dependencies]
 memmap2 = "0.9"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fuzzing,fuzzing_debug)'] }
