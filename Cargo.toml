@@ -2,7 +2,7 @@
 name = "honggfuzz"
 version = "0.5.59"
 edition = "2021"
-rust-version = "1.63"
+rust-version = "1.70" # NOTE also update ubuntu-msrv in .github/workflows/rust.yml
 authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
 license = "MIT/Apache-2.0/Unlicense/WTFPL"
 repository = "https://github.com/rust-fuzz/honggfuzz-rs"
