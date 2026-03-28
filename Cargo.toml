@@ -1,6 +1,6 @@
 [package]
 name = "honggfuzz"
-version = "0.5.59"
+version = "0.5.60"
 edition = "2021"
 rust-version = "1.70" # NOTE also update ubuntu-msrv in .github/workflows/rust.yml
 authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
