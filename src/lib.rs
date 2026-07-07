@@ -184,7 +184,7 @@
 //! #[cfg(fuzzing)]
 //! let mut rng = rand_chacha::ChaCha8Rng::from_seed(&[0]);
 //! #[cfg(not(fuzzing))]
-//! let mut rng = rand::thread_rng();
+//! let mut rng = rand::rng();
 //! # }
 //! ```
 //!

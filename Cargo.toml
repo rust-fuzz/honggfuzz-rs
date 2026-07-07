@@ -10,16 +10,21 @@ documentation = "https://docs.rs/honggfuzz"
 homepage = "https://github.com/rust-fuzz/honggfuzz-rs/blob/master/README.md"
 readme = "README.md"
 keywords = ["fuzzer", "fuzzing", "testing", "security", "property"]
-categories = ["command-line-utilities", "development-tools::testing", "development-tools::cargo-plugins", "development-tools::debugging"]
+categories = [
+    "command-line-utilities",
+    "development-tools::testing",
+    "development-tools::cargo-plugins",
+    "development-tools::debugging",
+]
 description = """
 Fuzz your Rust code with Google-developped Honggfuzz !
 """
 
 exclude = [
-	"/honggfuzz/examples/**",
-	"/honggfuzz/hfuzz_cc/**",
-	"/honggfuzz/**/*.png",
-	"/honggfuzz/includes/**",
+    "/honggfuzz/examples/**",
+    "/honggfuzz/hfuzz_cc/**",
+    "/honggfuzz/**/*.png",
+    "/honggfuzz/includes/**",
 ]
 
 [badges]
@@ -35,8 +40,8 @@ rustc_version = "0.4"
 semver = "1"
 
 [dev-dependencies]
-rand = "0.9"
-rand_chacha = "0.9"
+rand = "0.10"
+rand_chacha = "0.10"
 
 [target.'cfg(fuzzing)'.dependencies]
 lazy_static = "1.5"
