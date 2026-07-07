@@ -10,7 +10,9 @@ const HONGGFUZZ_TARGET: &str = "hfuzz_target";
 const HONGGFUZZ_WORKSPACE: &str = "hfuzz_workspace";
 
 #[cfg(target_family = "windows")]
-compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
+compile_error!(
+    "honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)"
+);
 
 #[derive(PartialEq)]
 enum BuildType {
@@ -153,12 +155,13 @@ where
 
             let hfuzz_build_profile =
                 if let Some(arg) = hfuzz_build_args.iter().find(|f| &f[..9] == "--profile") {
-                    arg.split("=")
-                        .collect::<Vec<_>>()
+                    let parts: Vec<_> = arg.split("=").collect();
+                    parts
                         .get(1)
                         .expect("--profile not in correct format (eg. --profile=<label>)")
+                        .to_string()
                 } else {
-                    "release"
+                    "release".to_string()
                 };
 
             fs::create_dir_all(&format!("{}/{}/input", &honggfuzz_workspace, target))
@@ -195,7 +198,10 @@ where
                 .exec();
 
             // code flow will only reach here if honggfuzz failed to execute
-            eprintln!("cannot execute {}, try to execute \"cargo hfuzz build\" from fuzzed project directory", &command);
+            eprintln!(
+                "cannot execute {}, try to execute \"cargo hfuzz build\" from fuzzed project directory",
+                &command
+            );
             eprintln!("{:?}", err);
             process::exit(1);
         }
@@ -407,7 +413,9 @@ fn main() {
             hfuzz_version();
         }
         _ => {
-            eprintln!("possible commands are: run, run-no-instr, run-debug, build, build-no-instr, build-grcov, build-debug, clean, version");
+            eprintln!(
+                "possible commands are: run, run-no-instr, run-debug, build, build-no-instr, build-grcov, build-debug, clean, version"
+            );
             process::exit(1);
         }
     }

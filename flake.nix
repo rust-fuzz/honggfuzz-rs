@@ -82,8 +82,9 @@
         languages = {
           rust = {
             enable = true;
-            channel = "stable";
-            version = "1.85.0";
+            channel = "nightly";
+            #channel = "stable";
+            #version = "1.85.0";
           };
         };
       };

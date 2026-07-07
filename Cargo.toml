@@ -1,7 +1,7 @@
 [package]
 name = "honggfuzz"
 version = "0.5.61"
-edition = "2021"
+edition = "2024"
 rust-version = "1.85" # NOTE also update ubuntu-msrv in .github/workflows/rust.yml
 authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
 license = "MIT/Apache-2.0/Unlicense/WTFPL"

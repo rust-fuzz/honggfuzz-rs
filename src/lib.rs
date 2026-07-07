@@ -210,7 +210,7 @@
 pub use arbitrary;
 
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
-extern "C" {
+unsafe extern "C" {
     fn HF_ITER(buf_ptr: *mut *const u8, len_ptr: *mut usize);
 }
 
@@ -327,7 +327,9 @@ where
     closure(&mmap);
 
     eprintln!("This crashfile didn't trigger any panics...");
-    eprintln!("Are you sure that you selected the correct crashfile and that your program's behavior is entirely deterministic and only dependent on the fuzzing input?");
+    eprintln!(
+        "Are you sure that you selected the correct crashfile and that your program's behavior is entirely deterministic and only dependent on the fuzzing input?"
+    );
     std::process::exit(2);
 }
 
