@@ -153,7 +153,7 @@ where
 
             let hfuzz_build_profile =
                 if let Some(arg) = hfuzz_build_args.iter().find(|f| f.starts_with("--profile")) {
-                    let parts: Vec<_> = arg.split("=").collect();
+                    let parts: Vec<_> = arg.splitn(2, '=').collect();
                     parts
                         .get(1)
                         .expect("--profile not in correct format (eg. --profile=<label>)")
