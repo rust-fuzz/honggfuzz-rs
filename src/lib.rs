@@ -378,7 +378,6 @@ macro_rules! _arbitrary_fuzz {
 /// }
 /// # }
 /// ```
-
 #[macro_export]
 macro_rules! fuzz {
     (|$buf:ident| $body:block) => {

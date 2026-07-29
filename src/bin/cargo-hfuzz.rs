@@ -24,12 +24,10 @@ enum BuildType {
 
 // TODO: maybe use `rustc_version` crate
 fn target_triple() -> String {
-    let output = Command::new("rustc").args(&["-v", "-V"]).output().unwrap();
+    let output = Command::new("rustc").args(["-v", "-V"]).output().unwrap();
     let stdout = String::from_utf8(output.stdout).unwrap();
     let triple = stdout
-        .lines()
-        .filter(|l| l.starts_with("host: "))
-        .next()
+        .lines().find(|l| l.starts_with("host: "))
         .unwrap()
         .get(6..)
         .unwrap();
@@ -61,7 +59,7 @@ fn debugger_command(target: &str) -> Command {
         .map(|f| f.to_string_lossy().contains("lldb"))
     {
         Some(true) => {
-            cmd.args(&[
+            cmd.args([
                 "-o",
                 "b rust_panic",
                 "-o",
@@ -74,7 +72,7 @@ fn debugger_command(target: &str) -> Command {
             ]);
         }
         _ => {
-            cmd.args(&[
+            cmd.args([
                 "-ex",
                 "b rust_panic",
                 "-ex",
@@ -164,7 +162,7 @@ where
                     "release".to_string()
                 };
 
-            fs::create_dir_all(&format!("{}/{}/input", &honggfuzz_workspace, target))
+            fs::create_dir_all(format!("{}/{}/input", &honggfuzz_workspace, target))
                 .unwrap_or_else(|_| {
                     println!(
                         "error: failed to create \"{}/{}/input\"",
@@ -174,7 +172,7 @@ where
 
             let command = format!("{}/honggfuzz", &honggfuzz_target);
             let err = Command::new(&command) // exec honggfuzz replacing current process
-                .args(&[
+                .args([
                     "-W",
                     &format!("{}/{}", &honggfuzz_workspace, target),
                     "-f",
@@ -182,7 +180,7 @@ where
                     "-P",
                 ])
                 .args(hfuzz_run_args) // allows user-specified arguments to be given to honggfuzz
-                .args(&[
+                .args([
                     "--",
                     &format!(
                         "{}/{}/{}/{}",
@@ -221,7 +219,7 @@ where
                 // old nightly
                 version_meta
                     .commit_date
-                    .map_or(false, |date| *date < *"2025-03-08")
+                    .is_some_and(|date| *date < *"2025-03-08")
             }
             Channel::Stable | Channel::Beta => {
                 // old non-nightly
@@ -230,17 +228,14 @@ where
         },
         Err(_) => false,
     } && match Command::new("which") // only if gold linker is available
-        .args(&["ld.gold"])
+        .args(["ld.gold"])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .stdin(Stdio::null())
         .status()
     {
         Err(_) => false,
-        Ok(status) => match status.code() {
-            Some(0) => true,
-            _ => false,
-        },
+        Ok(status) => matches!(status.code(), Some(0)),
     };
 
     let mut rustflags = String::new();
@@ -280,7 +275,7 @@ where
                 // The fix for now is to pass `-C passes=sancov-module` only to
                 // compilers for which the LLVM version is >= 13.
                 let version_meta = rustc_version::version_meta().unwrap();
-                if version_meta.llvm_version.map_or(true, |v| v.major >= 13) {
+                if version_meta.llvm_version.is_none_or(|v| v.major >= 13) {
                     rustflags.push_str("-C passes=sancov-module ");
                 } else {
                     rustflags.push_str("-C passes=sancov ");
@@ -316,13 +311,13 @@ where
     let cargo_bin = env::var("CARGO").unwrap_or_else(|_| "cargo".into());
     let mut command = Command::new(cargo_bin);
     command
-        .args(&["build", "--target", &target_triple()]) // HACK to avoid building build scripts with rustflags
+        .args(["build", "--target", &target_triple()]) // HACK to avoid building build scripts with rustflags
         .args(args)
         .args(hfuzz_build_args.clone()) // allows user-specified arguments to be given to cargo build
         .env("RUSTFLAGS", rustflags)
         .env("CARGO_INCREMENTAL", cargo_incremental)
         .env("CARGO_TARGET_DIR", &honggfuzz_target) // change target_dir to not clash with regular builds
-        .env("CRATE_ROOT", &crate_root);
+        .env("CRATE_ROOT", crate_root);
 
     if *build_type == BuildType::ProfileWithGrcov {
         command
@@ -355,7 +350,7 @@ where
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
     let cargo_bin = env::var("CARGO").unwrap_or_else(|_| "cargo".into());
     let status = Command::new(cargo_bin)
-        .args(&["clean"])
+        .args(["clean"])
         .args(args)
         .env("CARGO_TARGET_DIR", &honggfuzz_target) // change target_dir to not clash with regular builds
         .status()

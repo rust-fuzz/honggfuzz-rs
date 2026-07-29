@@ -63,7 +63,7 @@ fn main() {
 
     // build honggfuzz command and hfuzz static library
     let status = Command::new(GNU_MAKE)
-        .args(&["-C", "honggfuzz", &make_arg_build_dir, &make_arg_honggfuzz, &make_arg_libhfuzz, &make_arg_libhfcommon])
+        .args(["-C", "honggfuzz", &make_arg_build_dir, &make_arg_honggfuzz, &make_arg_libhfuzz, &make_arg_libhfcommon])
         .status()
         .unwrap_or_else(|_e| panic!("failed to run \"{GNU_MAKE} -C honggfuzz {make_arg_build_dir} {make_arg_honggfuzz} {make_arg_libhfuzz} {make_arg_libhfcommon}"));
     assert!(status.success());
@@ -89,7 +89,7 @@ fn main() {
     .unwrap();
 
     // tell cargo how to link final executable to hfuzz static library
-    println!("cargo:rustc-link-lib=static={}", "hfuzz");
-    println!("cargo:rustc-link-lib=static={}", "hfcommon");
+    println!("cargo:rustc-link-lib=static=hfuzz");
+    println!("cargo:rustc-link-lib=static=hfcommon");
     println!("cargo:rustc-link-search=native={}", out_dir.display());
 }
