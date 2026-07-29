@@ -13,40 +13,22 @@ jobs:
   ubuntu-nightly:
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
+    - uses: actions/checkout@v4
       with:
-        profile: minimal
-        toolchain: nightly
-        override: true
+        submodules: recursive
+    - uses: dtolnay/rust-toolchain@nightly
     - name: Install Deps
       run: sudo apt-get install --no-install-recommends build-essential binutils-dev libunwind-dev libblocksruntime-dev liblzma-dev
     - name: Test
       run: ./test.sh
 
-#  ubuntu-beta:
-#    runs-on: ubuntu-24.04
-#    steps:
-#    - uses: actions/checkout@v2
-#    - uses: actions-rs/toolchain@v1
-#      with:
-#        profile: minimal
-#        toolchain: beta
-#        override: true
-#    - name: Install Deps
-#      run: sudo apt-get install --no-install-recommends build-essential binutils-dev libunwind-dev libblocksruntime-dev liblzma-dev
-#    - name: Test
-#      run: ./test.sh
-
   ubuntu-stable:
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
+    - uses: actions/checkout@v4
       with:
-        profile: minimal
-        toolchain: stable
-        override: true
+        submodules: recursive
+    - uses: dtolnay/rust-toolchain@stable
     - name: Install Deps
       run: sudo apt-get install --no-install-recommends build-essential binutils-dev libunwind-dev libblocksruntime-dev liblzma-dev
     - name: Test
@@ -55,26 +37,11 @@ jobs:
   ubuntu-msrv:
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
+    - uses: actions/checkout@v4
       with:
-        profile: minimal
-        toolchain: 1.85.0
-        override: true
+        submodules: recursive
+    - uses: dtolnay/rust-toolchain@1.85.0
     - name: Install Deps
       run: sudo apt-get install --no-install-recommends build-essential binutils-dev libunwind-dev libblocksruntime-dev liblzma-dev
     - name: Test
       run: ./test.sh
-
-#  macos-nightly:
-#    runs-on: macos-10.15 # macos-11 is not yet supported by upstream honggfuzz
-#    steps:
-#    - uses: actions/checkout@v2
-#    - uses: actions-rs/toolchain@v1
-#      with:
-#        profile: minimal
-#        toolchain: nightly
-#        override: true
-#    - name: Test
-#      run: ./test.sh
-
