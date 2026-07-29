@@ -17,7 +17,7 @@ categories = [
     "development-tools::debugging",
 ]
 description = """
-Fuzz your Rust code with Google-developped Honggfuzz !
+Fuzz your Rust code with Google-developed Honggfuzz !
 """
 
 exclude = [
