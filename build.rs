@@ -6,7 +6,9 @@ use std::process::{self, Command};
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(target_family = "windows")]
-compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
+compile_error!(
+    "honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)"
+);
 
 // TODO: maybe use `make-cmd` crate
 #[cfg(not(any(
@@ -26,7 +28,8 @@ const GNU_MAKE: &str = "gmake";
 
 fn main() {
     // Only build honggfuzz binaries if we are in the process of building an instrumentized binary
-    let honggfuzz_target = match env::var("CARGO_HONGGFUZZ_TARGET_DIR") { // usually `hfuzz_target`
+    let honggfuzz_target = match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
+        // usually `hfuzz_target`
         Ok(path) => path, // path where to place honggfuzz binary. provided by cargo-hfuzz command.
         Err(_) => return,
     };
@@ -35,11 +38,13 @@ fn main() {
     let honggfuzz_build_version =
         env::var("CARGO_HONGGFUZZ_BUILD_VERSION").unwrap_or("unknown".to_string());
     if VERSION != honggfuzz_build_version {
-        eprintln!("The version of the honggfuzz library dependency ({0}) and the version of the `cargo-hfuzz` executable ({1}) do not match.\n\
+        eprintln!(
+            "The version of the honggfuzz library dependency ({0}) and the version of the `cargo-hfuzz` executable ({1}) do not match.\n\
                    If updating both by running `cargo update` and `cargo install honggfuzz` does not work, you can either:\n\
                    - change the dependency in `Cargo.toml` to `honggfuzz = \"={1}\"`\n\
                    - or run `cargo install honggfuzz --version {0}`",
-                  VERSION, honggfuzz_build_version);
+            VERSION, honggfuzz_build_version
+        );
         process::exit(1);
     }
 

@@ -5,7 +5,9 @@ use std::process::{self, Command};
 const HONGGFUZZ_TARGET: &str = "hfuzz_target";
 
 #[cfg(target_family = "windows")]
-compile_error!("honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)");
+compile_error!(
+    "honggfuzz-rs does not currently support Windows but works well under WSL (Windows Subsystem for Linux)"
+);
 
 fn main() {
     let mut args = env::args().skip(1);
