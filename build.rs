@@ -27,7 +27,7 @@ const GNU_MAKE: &str = "make";
 const GNU_MAKE: &str = "gmake";
 
 fn main() {
-    // Only build honggfuzz binaries if we are in the process of building an instrumentized binary
+    // Only build honggfuzz binaries if we are in the process of building an instrumented binary
     let honggfuzz_target = match env::var("CARGO_HONGGFUZZ_TARGET_DIR") {
         // usually `hfuzz_target`
         Ok(path) => path, // path where to place honggfuzz binary. provided by cargo-hfuzz command.
