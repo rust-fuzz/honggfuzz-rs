@@ -286,8 +286,7 @@ where
     // the panic hook.
     // If so, the fuzzer will be unable to tell different bugs apart and you will
     // only be able to find one bug at a time before fixing it to then find a new one.
-    // The closure is assumed to be unwind-safe, which might be unsafe. For more info, check the
-    // [`std::panic::UnwindSafe`] trait.
+    // The closure is assumed to be unwind-safe; see [`fuzz`] doc for safety notes.
     let did_panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         closure(buf);
     }))
