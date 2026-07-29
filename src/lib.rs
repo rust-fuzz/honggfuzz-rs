@@ -218,7 +218,7 @@ unsafe extern "C" {
 ///
 /// This slice contains a "random" quantity of "random" data.
 ///
-/// For perstistent fuzzing to work, you have to call it ad vita aeternam in an infinite loop.
+/// For persistent fuzzing to work, you have to call it ad vitam aeternam in an infinite loop.
 ///
 /// The closure is assumed to be unwind-safe, which might be unsafe. For more info, check the
 /// [`std::panic::UnwindSafe`] trait.
@@ -295,7 +295,7 @@ where
 
     if did_panic {
         // hopefully the custom panic hook will be called before and abort the
-        // process before the stack frames are unwinded.
+        // process before the stack frames are unwound.
         std::process::abort();
     }
 }
@@ -362,7 +362,7 @@ macro_rules! _arbitrary_fuzz {
 ///
 /// For performance reasons, it is recommended that you use the native type `&[u8]` when possible.
 ///
-/// For perstistent fuzzing to work, you have to call it ad vita aeternam in an infinite loop.
+/// For persistent fuzzing to work, you have to call it ad vitam aeternam in an infinite loop.
 ///
 /// ```rust,should_panic
 /// # use honggfuzz::fuzz;
