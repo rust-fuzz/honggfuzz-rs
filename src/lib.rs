@@ -168,7 +168,7 @@
 //! - Make you software behavior as much as possible deterministic on the fuzzing input
 //!   - [PRNG](https://en.wikipedia.org/wiki/Pseudorandom_number_generator)s must be seeded with a constant or the fuzzer input
 //!   - Behavior shouldn't change based on the computer's clock.
-//!   - Avoid potential undeterministic behavior from racing threads.
+//!   - Avoid potential nondeterministic behavior from racing threads.
 //!   - ...
 //! - Never ever call `std::process::exit()`.
 //! - Disable logging and other unnecessary functionalities.
