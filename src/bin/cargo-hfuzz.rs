@@ -83,7 +83,7 @@ fn debugger_command(target: &str) -> Command {
                 &format!("{}/{}/debug/{}", &honggfuzz_target, target_triple(), target),
             ]);
         }
-    };
+    }
 
     cmd
 }
@@ -279,7 +279,7 @@ where
                     rustflags.push_str("-C passes=sancov-module ");
                 } else {
                     rustflags.push_str("-C passes=sancov ");
-                };
+                }
 
                 rustflags.push_str("-C llvm-args=-sanitizer-coverage-level=4 "); // enables indirect calls
                 rustflags.push_str("-C llvm-args=-sanitizer-coverage-trace-pc-guard ");

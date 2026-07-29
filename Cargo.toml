@@ -50,3 +50,10 @@ memmap2 = "0.9"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fuzzing,fuzzing_debug)'] }
+
+[lints.clippy]
+match_like_matches_macro = "warn"
+redundant_closure_for_method_calls = "warn"
+map_unwrap_or = "warn"
+unnecessary_semicolon = "warn"
+explicit_iter_loop = "warn"
