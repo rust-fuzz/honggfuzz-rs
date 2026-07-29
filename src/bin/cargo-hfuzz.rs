@@ -152,7 +152,7 @@ where
             let hfuzz_build_args: Vec<_> = hfuzz_build_args.split_whitespace().collect();
 
             let hfuzz_build_profile =
-                if let Some(arg) = hfuzz_build_args.iter().find(|f| &f[..9] == "--profile") {
+                if let Some(arg) = hfuzz_build_args.iter().find(|f| f.starts_with("--profile")) {
                     let parts: Vec<_> = arg.split("=").collect();
                     parts
                         .get(1)
