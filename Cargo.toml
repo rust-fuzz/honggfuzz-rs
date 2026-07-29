@@ -28,7 +28,6 @@ exclude = [
 ]
 
 [badges]
-travis-ci = { repository = "rust-fuzz/honggfuzz-rs", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [features]
