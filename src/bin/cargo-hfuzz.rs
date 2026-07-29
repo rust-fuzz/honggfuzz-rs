@@ -212,7 +212,9 @@ where
 {
     let honggfuzz_target = env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| HONGGFUZZ_TARGET.into());
 
-    // HACK: temporary fix, see https://github.com/rust-lang/rust/issues/53945#issuecomment-426824324
+    // HACK: workaround for rustc < 1.87 linking issues with sanitizers.
+    // Since MSRV is 1.85, this is only relevant for older nightly releases.
+    // See https://github.com/rust-lang/rust/issues/53945#issuecomment-426824324
     let use_gold_linker: bool = match rustc_version::version_meta() {
         Ok(version_meta) => match version_meta.channel {
             Channel::Nightly | Channel::Dev => {
