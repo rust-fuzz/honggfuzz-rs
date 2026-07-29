@@ -1,7 +1,7 @@
 [package]
 name = "example"
 version = "0.0.0"
-edition = "2018"
+edition = "2024"
 authors = ["Paul Grandperrin <paul.grandperrin@gmail.com>"]
 default-run = "example"
 
