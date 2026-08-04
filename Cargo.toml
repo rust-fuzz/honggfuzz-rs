@@ -33,9 +33,6 @@ exclude = [
     "/flake.lock",
 ]
 
-[badges]
-maintenance = { status = "actively-developed" }
-
 [features]
 default = ["arbitrary"]
 
