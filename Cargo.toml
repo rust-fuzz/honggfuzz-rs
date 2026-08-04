@@ -25,6 +25,12 @@ exclude = [
     "/honggfuzz/hfuzz_cc/**",
     "/honggfuzz/**/*.png",
     "/honggfuzz/includes/**",
+    "/honggfuzz/third_party/**",
+    "/.envrc",
+    "/test.sh",
+    "/.github/**",
+    "/flake.nix",
+    "/flake.lock",
 ]
 
 [badges]
