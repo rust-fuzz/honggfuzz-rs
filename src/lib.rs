@@ -212,6 +212,7 @@ pub use arbitrary;
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
 unsafe extern "C" {
     fn HF_ITER(buf_ptr: *mut *const u8, len_ptr: *mut usize);
+    fn fcntl(fd: std::ffi::c_int, command: std::ffi::c_int, ...) -> std::ffi::c_int;
 }
 
 /// Fuzz a closure by passing it a `&[u8]`
@@ -249,51 +250,60 @@ where
     std::process::exit(17);
 }
 
-// This is the magic file descriptor honggfuzz uses
+// Keep these values in sync with honggfuzz:
+// https://github.com/google/honggfuzz/blob/8baf395e52a5d5dbb9f16642ad3be419fa6c58cb/honggfuzz.h#L75
 // https://github.com/google/honggfuzz/blob/8baf395e52a5d5dbb9f16642ad3be419fa6c58cb/honggfuzz.h#L89-L90
-const HF_INPUT_FD: std::os::unix::io::RawFd = 1021;
+#[cfg(all(fuzzing, not(fuzzing_debug)))]
+const HF_INPUT_MAX_SIZE: u64 = 8 * 1024 * 1024;
+#[cfg(all(fuzzing, not(fuzzing_debug)))]
+const HF_INPUT_FD: std::ffi::c_int = 1021;
+#[cfg(all(fuzzing, not(fuzzing_debug)))]
+const F_GETFD: std::ffi::c_int = 1;
+#[cfg(all(fuzzing, not(fuzzing_debug)))]
+const EBADF: std::ffi::c_int = 9;
 
+#[cfg(all(fuzzing, not(fuzzing_debug)))]
 fn is_input_available() -> bool {
-    unsafe {
-        let result = libc::fcntl(HF_INPUT_FD, libc::F_GETFD);
-        // https://github.com/google/honggfuzz/blob/8baf395e52a5d5dbb9f16642ad3be419fa6c58cb/libhfuzz/fetch.c#L23-L24
-        if result == -1 && *libc::__errno_location() == libc::EBADF {
-            false // Honggfuzz persistent mode
-        } else {
-            true // Read from file or stdin
-        }
-    }
+    // https://github.com/google/honggfuzz/blob/8baf395e52a5d5dbb9f16642ad3be419fa6c58cb/libhfuzz/fetch.c#L23-L24
+    let result = unsafe { fcntl(HF_INPUT_FD, F_GETFD) };
+    result != -1 || std::io::Error::last_os_error().raw_os_error() != Some(EBADF)
 }
 
-fn run_from_file<F>(closure: F) -> i32
+#[cfg(all(fuzzing, not(fuzzing_debug)))]
+fn run_standalone<F>(closure: F) -> i32
 where
     F: FnOnce(&[u8]),
 {
-    let args: Vec<String> = std::env::args().collect();
+    use std::io::Read;
 
-    let input = if args.len() > 1 {
-        match std::fs::read(&args[args.len() - 1]) {
-            Ok(data) => data,
-            Err(e) => {
-                eprintln!("Cannot open '{}': {}", args[args.len() - 1], e);
-                return 1;
+    let mut input = Vec::new();
+    let input_path = std::env::args_os().skip(1).last();
+    let read_result = if let Some(input_path) = input_path {
+        match std::fs::File::open(&input_path) {
+            Ok(file) => file.take(HF_INPUT_MAX_SIZE).read_to_end(&mut input),
+            Err(error) => {
+                eprintln!(
+                    "Cannot open '{}' as input ({error}), using stdin",
+                    input_path.to_string_lossy()
+                );
+                std::io::stdin()
+                    .take(HF_INPUT_MAX_SIZE)
+                    .read_to_end(&mut input)
             }
         }
     } else {
-        read_stdin()
+        std::io::stdin()
+            .take(HF_INPUT_MAX_SIZE)
+            .read_to_end(&mut input)
     };
+
+    if let Err(error) = read_result {
+        eprintln!("Couldn't read input: {error}");
+        return -1;
+    }
 
     closure(&input);
     0
-}
-
-fn read_stdin() -> Vec<u8> {
-    use std::io::Read;
-    let mut buf = Vec::new();
-    std::io::stdin()
-        .read_to_end(&mut buf)
-        .expect("Failed to read stdin");
-    buf
 }
 
 // Registers a panic hook that aborts the process before unwinding.
@@ -318,11 +328,10 @@ where
     // sets panic hook if not already done
     lazy_static::initialize(&PANIC_HOOK);
 
-    // Relicating logic from: https://github.com/google/honggfuzz/blob/8baf395e52a5d5dbb9f16642ad3be419fa6c58cb/libhfuzz/persistent.c#L117-L121
-    // Check if running in persistent mode
+    // Replicate honggfuzz's mode selection:
+    // https://github.com/google/honggfuzz/blob/8baf395e52a5d5dbb9f16642ad3be419fa6c58cb/libhfuzz/persistent.c#L117-L121
     if !is_input_available() {
-        // Running standalone - read input from file/stdin and run once
-        std::process::exit(run_from_file(closure));
+        std::process::exit(run_standalone(closure));
     }
 
     // Persistent loop

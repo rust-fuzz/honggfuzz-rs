@@ -52,7 +52,6 @@ version = "0.5.62"
 dependencies = [
  "arbitrary",
  "lazy_static",
- "libc",
  "memmap2",
  "rand",
  "rand_chacha",
