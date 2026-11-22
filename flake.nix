@@ -33,14 +33,11 @@
     #mk-shell-bin.url = "github:rrbutani/nix-mk-shell-bin";
 
     rust-overlay = {
-      url = "github:oxalica/rust-overlay/29a57fd94e9f384597222fb3301466a112a8c200"; # https://github.com/cachix/devenv/pull/2558
+      url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    crane = { # eventually, use dream2nix when it's more stable
-      url = "github:ipetkov/crane";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    crane.url = "github:ipetkov/crane";
   };
 
   outputs = inputs @ {flake-parts, nixpkgs, systems, fenix, crane, ...}: flake-parts.lib.mkFlake { inherit inputs; } {
@@ -85,6 +82,7 @@
             channel = "nightly";
             #channel = "stable";
             #version = "1.85.0";
+            clangLinker.enable = false;
           };
         };
       };
