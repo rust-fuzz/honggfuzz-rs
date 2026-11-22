@@ -39,6 +39,20 @@ crash_path="$(ls $workspace/*.fuzz | head -n1)"
 # verify that the fuzzing process found the crash
 test $(cat "$crash_path") = "hey"
 
+# Run the fuzzing binary outside honggfuzz to verify standalone input handling.
+# The known crash must reach the fuzz closure and trigger its aborting panic hook.
+set +e
+hfuzz_target/*/release/example "$crash_path"
+file_status=$?
+printf hey | hfuzz_target/*/release/example
+stdin_status=$?
+printf hey | hfuzz_target/*/release/example "$workspace/does-not-exist"
+fallback_status=$?
+set -e
+test $file_status -eq 134
+test $stdin_status -eq 134
+test $fallback_status -eq 134
+
 # build example in debug mode (and without sanitizers)
 cd subdirectory
 RUSTFLAGS="" $CARGO_HFUZZ build-debug --verbose
@@ -92,4 +106,3 @@ cargo clean
 
 # this directory should be empty
 rmdir subdirectory
-
