@@ -48,10 +48,13 @@ printf hey | hfuzz_target/*/release/example
 stdin_status=$?
 printf hey | hfuzz_target/*/release/example "$workspace/does-not-exist"
 fallback_status=$?
+hfuzz_target/*/release/example test.sh
+no_crash_status=$?
 set -e
 test $file_status -eq 134
 test $stdin_status -eq 134
 test $fallback_status -eq 134
+test $no_crash_status -eq 0
 
 # build example in debug mode (and without sanitizers)
 cd subdirectory

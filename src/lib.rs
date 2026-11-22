@@ -212,7 +212,7 @@ pub use arbitrary;
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
 unsafe extern "C" {
     fn HF_ITER(buf_ptr: *mut *const u8, len_ptr: *mut usize);
-    fn fcntl(fd: std::ffi::c_int, command: std::ffi::c_int, ...) -> std::ffi::c_int;
+    fn fetchIsInputAvailable() -> bool;
 }
 
 /// Fuzz a closure by passing it a `&[u8]`
@@ -252,99 +252,14 @@ where
 
 // Keep these values in sync with honggfuzz:
 // https://github.com/google/honggfuzz/blob/8baf395e52a5d5dbb9f16642ad3be419fa6c58cb/honggfuzz.h#L75
-// https://github.com/google/honggfuzz/blob/8baf395e52a5d5dbb9f16642ad3be419fa6c58cb/honggfuzz.h#L89-L90
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
 const HF_INPUT_MAX_SIZE: u64 = 8 * 1024 * 1024;
-#[cfg(all(fuzzing, not(fuzzing_debug)))]
-const HF_INPUT_FD: std::ffi::c_int = 1021;
-#[cfg(all(fuzzing, not(fuzzing_debug)))]
-const F_GETFD: std::ffi::c_int = 1;
-#[cfg(all(fuzzing, not(fuzzing_debug)))]
-const EBADF: std::ffi::c_int = 9;
 
 #[cfg(all(fuzzing, not(fuzzing_debug)))]
-fn is_input_available() -> bool {
-    // https://github.com/google/honggfuzz/blob/8baf395e52a5d5dbb9f16642ad3be419fa6c58cb/libhfuzz/fetch.c#L23-L24
-    let result = unsafe { fcntl(HF_INPUT_FD, F_GETFD) };
-    result != -1 || std::io::Error::last_os_error().raw_os_error() != Some(EBADF)
-}
-
-#[cfg(all(fuzzing, not(fuzzing_debug)))]
-fn run_standalone<F>(closure: F) -> i32
+fn run_one_input<F>(closure: F, buf: &[u8])
 where
     F: FnOnce(&[u8]),
 {
-    use std::io::Read;
-
-    let mut input = Vec::new();
-    let input_path = std::env::args_os().skip(1).last();
-    let read_result = if let Some(input_path) = input_path {
-        match std::fs::File::open(&input_path) {
-            Ok(file) => file.take(HF_INPUT_MAX_SIZE).read_to_end(&mut input),
-            Err(error) => {
-                eprintln!(
-                    "Cannot open '{}' as input ({error}), using stdin",
-                    input_path.to_string_lossy()
-                );
-                std::io::stdin()
-                    .take(HF_INPUT_MAX_SIZE)
-                    .read_to_end(&mut input)
-            }
-        }
-    } else {
-        std::io::stdin()
-            .take(HF_INPUT_MAX_SIZE)
-            .read_to_end(&mut input)
-    };
-
-    if let Err(error) = read_result {
-        eprintln!("Couldn't read input: {error}");
-        return -1;
-    }
-
-    closure(&input);
-    0
-}
-
-// Registers a panic hook that aborts the process before unwinding.
-// It is useful to abort before unwinding so that the fuzzer will then be
-// able to analyse the process stack frames to tell different bugs apart.
-#[cfg(all(fuzzing, not(fuzzing_debug)))]
-lazy_static::lazy_static! {
-    static ref PANIC_HOOK: () = {
-        std::panic::set_hook(Box::new(|_| {
-            std::process::abort();
-        }))
-    };
-}
-
-#[cfg(all(fuzzing, not(fuzzing_debug)))]
-pub fn fuzz<F>(closure: F)
-where
-    F: FnOnce(&[u8]),
-{
-    use std::mem::MaybeUninit;
-
-    // sets panic hook if not already done
-    lazy_static::initialize(&PANIC_HOOK);
-
-    // Replicate honggfuzz's mode selection:
-    // https://github.com/google/honggfuzz/blob/8baf395e52a5d5dbb9f16642ad3be419fa6c58cb/libhfuzz/persistent.c#L117-L121
-    if !is_input_available() {
-        std::process::exit(run_standalone(closure));
-    }
-
-    // Persistent loop
-    let buf;
-    let mut buf_ptr = MaybeUninit::<*const u8>::uninit();
-    let mut len_ptr = MaybeUninit::<usize>::uninit();
-
-    unsafe {
-        // Get buffer from honggfuzz runtime
-        HF_ITER(buf_ptr.as_mut_ptr(), len_ptr.as_mut_ptr());
-        buf = std::slice::from_raw_parts(buf_ptr.assume_init(), len_ptr.assume_init());
-    }
-
     // We still catch unwinding panics just in case the fuzzed code modifies
     // the panic hook.
     // If so, the fuzzer will be unable to tell different bugs apart and you will
@@ -360,6 +275,104 @@ where
         // process before the stack frames are unwound.
         std::process::abort();
     }
+}
+
+#[cfg(all(fuzzing, not(fuzzing_debug)))]
+fn run_standalone<F>(closure: F) -> i32
+where
+    F: FnOnce(&[u8]),
+{
+    use std::io::Read;
+
+    let mut input = Vec::new();
+    let mut args = std::env::args_os();
+    let arg0 = args.next();
+    let input_path = args.last();
+    let (fname, read_result) = if let Some(input_path) = input_path {
+        let fname = input_path.to_string_lossy().into_owned();
+        match std::fs::File::open(&input_path) {
+            Ok(file) => (
+                fname,
+                file.take(HF_INPUT_MAX_SIZE).read_to_end(&mut input),
+            ),
+            Err(error) => {
+                eprintln!("Cannot open '{fname}' as input ({error}), using stdin");
+                (
+                    "[STDIN]".to_string(),
+                    std::io::stdin()
+                        .take(HF_INPUT_MAX_SIZE)
+                        .read_to_end(&mut input),
+                )
+            }
+        }
+    } else {
+        (
+            "[STDIN]".to_string(),
+            std::io::stdin()
+                .take(HF_INPUT_MAX_SIZE)
+                .read_to_end(&mut input),
+        )
+    };
+
+    eprintln!("Accepting input from '{fname}'");
+    if let Some(arg0) = arg0 {
+        eprintln!(
+            "Usage for fuzzing: honggfuzz -P [flags] -- {}",
+            arg0.to_string_lossy()
+        );
+    }
+
+    if let Err(error) = read_result {
+        eprintln!("Couldn't read input: {error}");
+        return 1;
+    }
+
+    run_one_input(closure, &input);
+    0
+}
+
+// Registers a panic hook that aborts the process before unwinding.
+// It is useful to abort before unwinding so that the fuzzer will then be
+// able to analyse the process stack frames to tell different bugs apart.
+#[cfg(all(fuzzing, not(fuzzing_debug)))]
+lazy_static::lazy_static! {
+    static ref PANIC_HOOK: () = {
+        let default_hook = std::panic::take_hook();
+        std::panic::set_hook(Box::new(move |panic_info| {
+            default_hook(panic_info);
+            std::process::abort();
+        }));
+    };
+}
+
+#[cfg(all(fuzzing, not(fuzzing_debug)))]
+pub fn fuzz<F>(closure: F)
+where
+    F: FnOnce(&[u8]),
+{
+    use std::mem::MaybeUninit;
+
+    // sets panic hook if not already done
+    lazy_static::initialize(&PANIC_HOOK);
+
+    // Replicate honggfuzz's mode selection:
+    // https://github.com/google/honggfuzz/blob/8baf395e52a5d5dbb9f16642ad3be419fa6c58cb/libhfuzz/persistent.c#L117-L121
+    if unsafe { !fetchIsInputAvailable() } {
+        std::process::exit(run_standalone(closure));
+    }
+
+    // Persistent loop
+    let buf;
+    let mut buf_ptr = MaybeUninit::<*const u8>::uninit();
+    let mut len_ptr = MaybeUninit::<usize>::uninit();
+
+    unsafe {
+        // Get buffer from honggfuzz runtime
+        HF_ITER(buf_ptr.as_mut_ptr(), len_ptr.as_mut_ptr());
+        buf = std::slice::from_raw_parts(buf_ptr.assume_init(), len_ptr.assume_init());
+    }
+
+    run_one_input(closure, buf);
 }
 
 #[cfg(all(fuzzing, fuzzing_debug))]
